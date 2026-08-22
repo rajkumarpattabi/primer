@@ -455,5 +455,44 @@ window.PRIMER_SEED = [
       { q: "What is FinOps?", a: "A practice for managing and optimising cloud spend collaboratively across engineering, finance and business." },
       { q: "MLOps vs DevSecOps vs FinOps in one line?", a: "MLOps runs ML models reliably; DevSecOps builds security into delivery; FinOps controls cloud cost — three 'ops' disciplines for different concerns." }
     ]
+  },
+  {
+    term: "Data drift", theme: "AI models",
+    oneLiner: "The model's input data changes over time.",
+    why: "A model expects inputs that look like its training data; when the incoming data's patterns shift (new users, seasons, formats), predictions degrade even if the underlying rule hasn't changed.",
+    analogy: "A tailor who sizes suits from last year's measurements — the customers changed shape, so the fits are off.",
+    connects: ["Concept drift", "Model drift", "MLOps"],
+    summary: "Data drift is a change in the distribution of a model's INPUTS over time; the relationship being predicted may still hold, but the data feeding it looks different.",
+    nextTopics: ["Concept drift", "Model monitoring", "Retraining pipelines"],
+    cards: [
+      { q: "What is data drift?", a: "When the distribution of the model's input data shifts away from what it was trained on." },
+      { q: "Data drift vs concept drift?", a: "Data drift = the inputs change; concept drift = the input→output relationship itself changes." }
+    ]
+  },
+  {
+    term: "Concept drift", theme: "AI models",
+    oneLiner: "The rule linking inputs to outputs changes over time.",
+    why: "Even with the same kind of inputs, what they MEAN can change (e.g. what counts as 'fraud' or 'spam' evolves), so a once-accurate model becomes wrong.",
+    analogy: "A fraud detector trained before a new scam existed — the inputs look normal, but the meaning of 'suspicious' has moved.",
+    connects: ["Data drift", "Model drift", "MLOps"],
+    summary: "Concept drift is a change in the input→output relationship itself; the model's learned rule no longer matches reality, so it must be retrained.",
+    nextTopics: ["Data drift", "Model monitoring", "Retraining pipelines"],
+    cards: [
+      { q: "What is concept drift?", a: "When the relationship between inputs and the correct output changes over time, making the model's learned rule wrong." },
+      { q: "Which drift is about meaning changing, not the data?", a: "Concept drift — the input→output rule shifts, even if the inputs look similar." }
+    ]
+  },
+  {
+    term: "Red teaming", theme: "Governance",
+    oneLiner: "Deliberately attacking a system to find its weaknesses.",
+    why: "The best way to know how something fails is to try to break it on purpose; for AI, red teams probe a model for harmful, biased, or manipulable behaviour before attackers or users hit it in the wild.",
+    analogy: "Hiring ethical burglars to test your locks before real thieves do.",
+    connects: ["Guardrails", "Hallucinations", "Explainability", "MetricStream"],
+    summary: "Red teaming is adversarial testing — experts intentionally try to make a system (or AI model) misbehave, exposing risks so they can be fixed.",
+    nextTopics: ["Guardrails", "Jailbreaking", "AI governance"],
+    cards: [
+      { q: "What is red teaming?", a: "Deliberately attacking or stress-testing a system to uncover weaknesses before real adversaries do." },
+      { q: "Why red team an AI model?", a: "To find harmful, biased or manipulable outputs (e.g. jailbreaks) before release, so guardrails can be added." }
+    ]
   }
 ];

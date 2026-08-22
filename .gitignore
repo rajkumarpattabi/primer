@@ -1,0 +1,6 @@
+# Not part of the app — leftover from local testing.
+node_modules/
+
+# OS / editor cruft
+.DS_Store
+Thumbs.db

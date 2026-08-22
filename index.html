@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<!--
+  Primer — index.html (app shell / markup)
+  ------------------------------------------------------------------------
+  A personal "learning companion" PWA: capture any tech term you hear, get a
+  plain-language explanation, see how it connects to what you already know,
+  and review it with spaced-repetition flashcards until it sticks.
+
+  Structure: a fixed top bar, a <main> holding four <section class="tab">
+  screens (only one is .active at a time), a full-screen concept overlay, and
+  a bottom <nav class="tabbar"> whose buttons switch tabs. The tabs are:
+    #tab-capture   Capture  — type a term -> AI (or manual) explanation, save it
+    #tab-library   Library  — every saved concept, grouped by theme, searchable
+    #tab-map       Map      — the connected knowledge graph (tap to see links)
+    #tab-review    Review   — spaced-repetition flashcards for what's due
+
+  Same model as mealfast/healthdashboard: static files only, data lives in the
+  phone's localStorage, offline via sw.js. The only network call is the
+  optional AI Capture, which goes to YOUR Cloudflare Worker (config.js) so the
+  API key never touches this repo or the phone. Element ids here are the hooks
+  app.js reads. Styling is in style.css; behaviour is in app.js (loaded last).
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Primer">
+<meta name="theme-color" content="#F6F4EC">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" href="icons/icon-192.png">
+<link rel="stylesheet" href="style.css">
+<title>Primer</title>
+</head>
+<body>
+
+<header class="topbar">
+  <span class="topbar-mark">Primer <span class="ver" id="verStamp"></span></span>
+  <span class="streak-badge" id="streakBadge">0-day streak</span>
+</header>
+
+<main>
+
+  <!-- ================= CAPTURE ================= -->
+  <section id="tab-capture" class="tab active">
+    <div class="capture-box">
+      <input id="termInput" class="term-input" type="text" autocomplete="off"
+             autocapitalize="none" placeholder="Type any term you heard…">
+      <button id="explainBtn" class="btn-primary">Explain &amp; save</button>
+      <div id="captureHint" class="capture-hint"></div>
+    </div>
+
+    <div id="dueStrip" class="due-strip" hidden>
+      <span id="dueCount">0 due</span>
+      <button id="goReviewBtn" class="link-btn">Review now →</button>
+    </div>
+
+    <div class="section-cap">Recently captured</div>
+    <div id="recentList" class="chip-wrap"></div>
+
+    <div id="captureEmpty" class="empty-state">
+      <div class="empty-emoji">◈</div>
+      <p>No concepts yet. New concepts are added with Claude and pushed via git —
+         they'll appear here automatically on next open.</p>
+    </div>
+  </section>
+
+  <!-- ================= LIBRARY ================= -->
+  <section id="tab-library" class="tab">
+    <input id="librarySearch" class="term-input" type="text" autocomplete="off"
+           autocapitalize="none" placeholder="Search your library…">
+    <div id="libraryList"></div>
+    <div id="libraryEmpty" class="empty-state">
+      <div class="empty-emoji">▤</div>
+      <p>Your saved concepts will appear here, grouped by theme.</p>
+    </div>
+  </section>
+
+  <!-- ================= MAP ================= -->
+  <section id="tab-map" class="tab">
+    <div class="section-cap">Your connected map</div>
+    <p class="map-intro">Tap any concept to see what it links to — that's the
+       point, building a <b>connected</b> mental model, not isolated facts.</p>
+    <div id="mapCanvas"></div>
+    <div id="mapEmpty" class="empty-state">
+      <div class="empty-emoji">◈</div>
+      <p>Capture a few concepts and the map fills in with their connections.</p>
+    </div>
+  </section>
+
+  <!-- ================= REVIEW ================= -->
+  <section id="tab-review" class="tab">
+    <div id="reviewArea" class="review-area"></div>
+  </section>
+
+</main>
+
+<!-- ================= CONCEPT OVERLAY ================= -->
+<div id="conceptOverlay" class="overlay" hidden>
+  <div class="overlay-head">
+    <button id="overlayBack" class="link-btn">← Back</button>
+    <span id="overlayTheme" class="pill"></span>
+  </div>
+  <div class="overlay-body" id="overlayBody"></div>
+  <div class="overlay-foot">
+    <button id="addReviewBtn" class="btn-ghost">＋ Add to review</button>
+    <button id="deleteConceptBtn" class="btn-ghost danger">Delete</button>
+  </div>
+</div>
+
+<!-- ================= SETTINGS SHEET ================= -->
+<div id="settingsSheet" class="overlay" hidden>
+  <div class="overlay-head">
+    <button id="settingsBack" class="link-btn">← Back</button>
+    <span class="pill">Settings</span>
+  </div>
+  <div class="overlay-body">
+    <div class="card">
+      <h4>AI Capture</h4>
+      <p class="muted-p">Status: <b id="aiStatus">checking…</b></p>
+      <p class="muted-p">Explanations are generated by your own Cloudflare
+         Worker so your API key stays private. Set the Worker URL in
+         <code>config.js</code>, then enter your app pass-phrase once below.</p>
+      <input id="appKeyInput" class="term-input" type="password"
+             placeholder="App pass-phrase (APP_KEY)">
+      <button id="saveKeyBtn" class="btn-ghost">Save pass-phrase</button>
+    </div>
+    <div class="card">
+      <h4>Your data</h4>
+      <p class="muted-p">Everything lives only in this browser. Export a backup
+         you can keep, or import one.</p>
+      <button id="exportBtn" class="btn-ghost">Export backup (.json)</button>
+      <label class="btn-ghost file-label">Import backup
+        <input id="importFile" type="file" accept="application/json" hidden>
+      </label>
+    </div>
+    <div class="card">
+      <h4>About</h4>
+      <p class="muted-p">A private, offline-first learning companion. No account,
+         no server (except your own Worker), no tracking.</p>
+      <p class="muted-p">Build: <b id="aboutVersion">—</b></p>
+    </div>
+    <div class="ver-foot" id="verFoot"></div>
+  </div>
+  <div class="overlay-foot"></div>
+</div>
+
+<!-- ================= BOTTOM TAB BAR ================= -->
+<nav class="tabbar">
+  <button class="tabbtn active" data-tab="capture"><span class="tab-ic">＋</span>Capture</button>
+  <button class="tabbtn" data-tab="library"><span class="tab-ic">▤</span>Library</button>
+  <button class="tabbtn" data-tab="map"><span class="tab-ic">◈</span>Map</button>
+  <button class="tabbtn" data-tab="review"><span class="tab-ic">↻</span>Review</button>
+  <button class="tabbtn" id="settingsBtn"><span class="tab-ic">⚙</span>More</button>
+</nav>
+
+<div id="toast" class="toast" hidden></div>
+
+<script src="config.js"></script>
+<script src="concepts.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

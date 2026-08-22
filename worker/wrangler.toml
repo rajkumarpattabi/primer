@@ -1,0 +1,19 @@
+# Cloudflare Worker config for Primer (AI Capture).
+# Deploy with:  npx wrangler deploy   (run from this worker/ folder)
+
+name = "primer"
+main = "worker.js"
+compatibility_date = "2024-11-01"
+
+# Public (non-secret) variables.
+[vars]
+# Edit APP_URL to YOUR GitHub Pages URL (locks CORS to your app's origin).
+APP_URL = "https://rajkumarpattabi.github.io/primer/"
+# LLM model id. Change if you prefer a different / cheaper model.
+MODEL = "claude-sonnet-5"
+
+# Secrets are NOT stored in this file (it's committed to a public repo).
+# Set both once — Cloudflare encrypts them:
+#   npx wrangler secret put ANTHROPIC_API_KEY   # your Anthropic API key
+#   npx wrangler secret put APP_KEY             # any pass-phrase you invent
+#                                               # (typed into the app once, in More →)

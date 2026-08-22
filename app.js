@@ -24,7 +24,7 @@
   const WORKER_URL = (window.PRIMER_CONFIG && window.PRIMER_CONFIG.WORKER_URL || "").replace(/\/+$/, "");
 
   // Version stamp — BUMP THIS on each release so a device shows which build it runs.
-  const APP_VERSION = "1.3.1";
+  const APP_VERSION = "1.3.2";
 
   // Per-theme accent colours (kept in sync with the --t-* vars in style.css).
   const THEME_COLORS = {
@@ -168,6 +168,7 @@
     if (name === "map") renderMap();
     if (name === "review") renderReview();
     if (name === "capture") renderCapture();
+    if (name === "more") renderMore();
     document.querySelector("main").scrollTop = 0;
   }
 
@@ -180,7 +181,7 @@
 
     const existing = findByTerm(term);
     if (existing) { input.value = ""; openConcept(existing.id); return; }
-    if (!settings.appKey) { openSettings(); toast("Enter your app pass-phrase first."); return; }
+    if (!settings.appKey) { setTab("more"); toast("Enter your app pass-phrase first."); return; }
 
     const btn = document.getElementById("explainBtn");
     btn.disabled = true;
@@ -599,7 +600,7 @@
   }
 
   /* ------------------------------ SETTINGS -------------------------------- */
-  function openSettings() {
+  function renderMore() {
     const status = document.getElementById("aiStatus");
     if (!WORKER_URL) status.textContent = "not configured — offline manual mode";
     else if (!settings.appKey) status.textContent = "Worker set — enter pass-phrase below";
@@ -608,9 +609,7 @@
     document.getElementById("ghTokenInput").value = settings.ghToken || "";
     document.getElementById("ghStatus").textContent = settings.ghToken ? "set — Capture writes to git" : "not set";
     renderVersion();
-    document.getElementById("settingsSheet").hidden = false;
   }
-  function closeSettings() { document.getElementById("settingsSheet").hidden = true; }
 
   function exportBackup() {
     const blob = new Blob([JSON.stringify({ concepts, settings, exportedAt: Date.now() }, null, 2)], { type: "application/json" });
@@ -627,7 +626,7 @@
         const data = JSON.parse(r.result);
         if (Array.isArray(data.concepts)) { concepts = data.concepts.map((c) => normaliseConcept(c, c.inReview !== false)); saveConcepts(); }
         if (data.settings) { settings = Object.assign(settings, data.settings); saveSettings(); }
-        toast("Backup imported"); closeSettings(); renderCapture(); renderStreak();
+        toast("Backup imported"); setTab("capture"); renderStreak();
       } catch (e) { toast("Couldn't read that file"); }
     };
     r.readAsText(file);
@@ -656,7 +655,14 @@
   /* ------------------------------ BOOT ------------------------------------ */
   function wire() {
     document.querySelectorAll(".tabbtn[data-tab]").forEach((b) => (b.onclick = () => setTab(b.dataset.tab)));
-    document.getElementById("settingsBtn").onclick = openSettings;
+    document.querySelectorAll(".collapse-head").forEach((h) => {
+      h.onclick = () => {
+        const body = h.nextElementSibling;
+        const opening = body.hasAttribute("hidden");
+        if (opening) body.removeAttribute("hidden"); else body.setAttribute("hidden", "");
+        h.classList.toggle("open", opening);
+      };
+    });
     // Adapt the Capture box to whether live AI Capture is enabled (backlog by default).
     const explainBtn = document.getElementById("explainBtn");
     const termInput = document.getElementById("termInput");
@@ -670,14 +676,13 @@
     document.getElementById("overlayBack").onclick = closeOverlay;
     document.getElementById("addReviewBtn").onclick = toggleReview;
     document.getElementById("deleteConceptBtn").onclick = deleteOpen;
-    document.getElementById("settingsBack").onclick = closeSettings;
     document.getElementById("saveKeyBtn").onclick = () => {
       settings.appKey = document.getElementById("appKeyInput").value.trim(); saveSettings();
-      openSettings(); toast("Saved");
+      renderMore(); toast("Saved");
     };
     document.getElementById("saveGhBtn").onclick = () => {
       settings.ghToken = document.getElementById("ghTokenInput").value.trim(); saveSettings();
-      setCapturePlaceholder(); refreshCaptureUI(); openSettings(); toast("Token saved");
+      setCapturePlaceholder(); refreshCaptureUI(); renderMore(); toast("Token saved");
     };
     document.getElementById("exportBtn").onclick = exportBackup;
     document.getElementById("importFile").onchange = (e) => { if (e.target.files[0]) importBackup(e.target.files[0]); };

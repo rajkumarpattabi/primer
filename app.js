@@ -24,7 +24,7 @@
   const WORKER_URL = (window.PRIMER_CONFIG && window.PRIMER_CONFIG.WORKER_URL || "").replace(/\/+$/, "");
 
   // Version stamp — BUMP THIS on each release so a device shows which build it runs.
-  const APP_VERSION = "1.1.6";
+  const APP_VERSION = "1.2.0";
 
   // Per-theme accent colours (kept in sync with the --t-* vars in style.css).
   const THEME_COLORS = {
@@ -36,6 +36,18 @@
     "Concepts": "#C98A12"
   };
   function themeColor(t) { return THEME_COLORS[t] || "#4C63E6"; }
+
+  // Logical (foundational -> advanced) theme order, used as a tiebreak.
+  const THEME_ORDER = ["Data platforms", "Governance", "AI models", "AI applications", "Ways of working", "Concepts"];
+  // Order themes by how many concepts they contain (most first), logical order as tiebreak.
+  function orderedThemes(groups) {
+    return Object.keys(groups).sort((a, b) => {
+      const d = groups[b].length - groups[a].length;
+      if (d !== 0) return d;
+      const ia = THEME_ORDER.indexOf(a), ib = THEME_ORDER.indexOf(b);
+      return (ia === -1 ? 99 : ia) - (ib === -1 ? 99 : ib);
+    });
+  }
 
   // Where the in-app "Queue to git" capture writes (non-secret; token is separate).
   const GH = {
@@ -232,6 +244,7 @@
       if (res.status === 401 || res.status === 403) { hint.textContent = "GitHub token rejected or lacks access. Check it in More →."; btn.disabled = false; return; }
       if (!res.ok) throw new Error("HTTP " + res.status);
       input.value = ""; hint.textContent = "";
+      document.getElementById("captureSuggest").innerHTML = ""; refreshCaptureUI();
       toast("Queued “" + term + "” to git — becomes a full concept after the next laptop sync.");
     } catch (e) {
       hint.textContent = "Couldn't reach GitHub (" + (e.message || e) + "). Check your connection or token.";
@@ -240,21 +253,53 @@
     }
   }
 
-  // Route the Capture box: queue-to-git if a token is set, else live AI (if a
-  // Worker is configured), else a quick "find a concept".
+  // The Capture box is a combined search-or-add: submitting an existing term
+  // opens it; a new term is queued to git (or AI/find if no token).
   function submitCapture() {
+    const input = document.getElementById("termInput");
+    const q = input.value.trim();
+    if (!q) return;
+    const exact = findByTerm(q);
+    if (exact) { input.value = ""; document.getElementById("captureSuggest").innerHTML = ""; refreshCaptureUI(); openConcept(exact.id); return; }
     if (settings.ghToken) return queueToGit();
     if (WORKER_URL) return doExplain();
     return doFind();
   }
 
-  // Label the Capture box for whichever mode is active.
-  function updateCaptureLabel() {
-    const b = document.getElementById("explainBtn");
+  function setCapturePlaceholder() {
     const i = document.getElementById("termInput");
-    if (settings.ghToken) { b.textContent = "Queue to git"; i.placeholder = "Add a term to your git inbox…"; }
-    else if (WORKER_URL) { b.textContent = "Explain & save"; i.placeholder = "Type any term you heard…"; }
-    else { b.textContent = "Find"; i.placeholder = "Find a concept…"; }
+    i.placeholder = settings.ghToken ? "Search, or add a new term…"
+      : (WORKER_URL ? "Type any term you heard…" : "Find a concept…");
+  }
+
+  // Live search-as-you-type: show matching concepts and adapt the button
+  // (Open an existing term, or Add a new one to git).
+  function refreshCaptureUI() {
+    const input = document.getElementById("termInput");
+    const sug = document.getElementById("captureSuggest");
+    const b = document.getElementById("explainBtn");
+    const q = (input.value || "").trim();
+    sug.innerHTML = "";
+    if (q) {
+      const ql = q.toLowerCase();
+      concepts
+        .filter((c) => c.term.toLowerCase().includes(ql) || (c.oneLiner || "").toLowerCase().includes(ql))
+        .sort((a, b2) => a.term.localeCompare(b2.term))
+        .slice(0, 6)
+        .forEach((c) => {
+          const it = document.createElement("div");
+          it.className = "suggest-item";
+          it.style.borderLeftColor = themeColor(c.theme);
+          it.innerHTML = '<span class="st">' + escapeHtml(c.term) + '</span><span class="so">' + escapeHtml(c.theme) + "</span>";
+          it.onclick = () => { input.value = ""; sug.innerHTML = ""; refreshCaptureUI(); openConcept(c.id); };
+          sug.appendChild(it);
+        });
+    }
+    const exact = q ? findByTerm(q) : null;
+    if (exact) b.textContent = "Open";
+    else if (settings.ghToken) b.textContent = "Add to git";
+    else if (WORKER_URL) b.textContent = "Explain & save";
+    else b.textContent = "Find";
   }
 
   function renderCapture() {
@@ -276,6 +321,7 @@
     });
     document.getElementById("captureEmpty").hidden = concepts.length > 0;
     document.querySelector("#tab-capture .section-cap").hidden = concepts.length === 0;
+    refreshCaptureUI();
   }
 
   /* ------------------------------ LIBRARY --------------------------------- */
@@ -292,29 +338,29 @@
     // group by theme
     const groups = {};
     filtered.forEach((c) => { (groups[c.theme] = groups[c.theme] || []).push(c); });
-    const order = ["Data platforms", "Governance", "AI models", "AI applications", "Ways of working", "Concepts"];
-    const themes = Object.keys(groups).sort((a, b) => {
-      const ia = order.indexOf(a), ib = order.indexOf(b);
-      return (ia === -1 ? 99 : ia) - (ib === -1 ? 99 : ib);
-    });
 
     const now = Date.now();
-    themes.forEach((theme) => {
-      const h = document.createElement("div"); h.className = "theme-head"; h.textContent = theme;
-      h.style.color = themeColor(theme);
+    orderedThemes(groups).forEach((theme) => {
+      const col = themeColor(theme);
+      const h = document.createElement("div"); h.className = "theme-head";
+      h.textContent = theme + " (" + groups[theme].length + ")";
+      h.style.color = col;
       list.appendChild(h);
+
+      const grid = document.createElement("div"); grid.className = "lib-grid";
       groups[theme].sort((a, b) => a.term.localeCompare(b.term)).forEach((c) => {
         const isDue = c.inReview && c.cards.some((cd) => cd.srs.due <= now);
-        const row = document.createElement("div");
-        row.className = "card concept-row";
-        row.style.borderLeftColor = themeColor(c.theme);
-        row.innerHTML =
-          '<div class="meta"><div class="term">' + escapeHtml(c.term) + '</div>' +
-          '<div class="ol">' + escapeHtml(c.oneLiner || "") + '</div></div>' +
+        const card = document.createElement("div");
+        card.className = "lib-card";
+        card.style.borderLeftColor = themeColor(c.theme);
+        card.innerHTML =
+          '<div class="lt">' + escapeHtml(c.term) + "</div>" +
+          '<div class="lo">' + escapeHtml(c.oneLiner || "") + "</div>" +
           (isDue ? '<span class="due-dot" title="due for review"></span>' : "");
-        row.onclick = () => openConcept(c.id);
-        list.appendChild(row);
+        card.onclick = () => openConcept(c.id);
+        grid.appendChild(card);
       });
+      list.appendChild(grid);
     });
   }
 
@@ -327,8 +373,7 @@
 
     const groups = {};
     concepts.forEach((c) => { (groups[c.theme] = groups[c.theme] || []).push(c); });
-    const order = ["Data platforms", "Governance", "AI models", "AI applications", "Ways of working", "Concepts"];
-    const themes = Object.keys(groups).sort((a, b) => (order.indexOf(a) + 1 || 99) - (order.indexOf(b) + 1 || 99));
+    const themes = orderedThemes(groups);
 
     // links list for the highlighted node
     const hi = mapHi ? findConcept(mapHi) : null;
@@ -347,7 +392,8 @@
 
     themes.forEach((theme) => {
       const g = document.createElement("div"); g.className = "map-group";
-      const h = document.createElement("div"); h.className = "theme-head"; h.textContent = theme;
+      const h = document.createElement("div"); h.className = "theme-head";
+      h.textContent = theme + " (" + groups[theme].length + ")";
       h.style.color = themeColor(theme);
       g.appendChild(h);
       groups[theme].sort((a, b) => a.term.localeCompare(b.term)).forEach((c) => {
@@ -552,8 +598,10 @@
     // Adapt the Capture box to whether live AI Capture is enabled (backlog by default).
     const explainBtn = document.getElementById("explainBtn");
     const termInput = document.getElementById("termInput");
-    updateCaptureLabel();
+    setCapturePlaceholder();
+    refreshCaptureUI();
     explainBtn.onclick = submitCapture;
+    termInput.addEventListener("input", refreshCaptureUI);
     termInput.addEventListener("keydown", (e) => { if (e.key === "Enter") submitCapture(); });
     document.getElementById("librarySearch").addEventListener("input", renderLibrary);
     document.getElementById("goReviewBtn").onclick = () => setTab("review");
@@ -567,7 +615,7 @@
     };
     document.getElementById("saveGhBtn").onclick = () => {
       settings.ghToken = document.getElementById("ghTokenInput").value.trim(); saveSettings();
-      updateCaptureLabel(); openSettings(); toast("Token saved");
+      setCapturePlaceholder(); refreshCaptureUI(); openSettings(); toast("Token saved");
     };
     document.getElementById("exportBtn").onclick = exportBackup;
     document.getElementById("importFile").onchange = (e) => { if (e.target.files[0]) importBackup(e.target.files[0]); };

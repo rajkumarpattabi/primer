@@ -33,7 +33,8 @@ set "MSG=%~1"
 if "%MSG%"=="" set "MSG=content: update concepts"
 
 echo.
-echo [1/4] Staging changes...
+echo [1/4] Clearing processed (empty) inbox captures, then staging...
+if exist "inbox\" for %%F in (inbox\*.md) do if /I not "%%~nxF"=="README.md" if %%~zF EQU 0 del "%%F"
 git add -A
 
 echo.

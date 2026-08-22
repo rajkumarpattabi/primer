@@ -39,6 +39,10 @@
 
 * { box-sizing: border-box; }
 
+/* The HTML `hidden` attribute must always win, even over display:flex rules
+   below (e.g. .overlay, .due-strip). Without this, hidden overlays stay visible. */
+[hidden] { display: none !important; }
+
 html, body {
   margin: 0; padding: 0;
   background: var(--paper);

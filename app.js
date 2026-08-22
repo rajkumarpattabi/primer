@@ -24,7 +24,7 @@
   const WORKER_URL = (window.PRIMER_CONFIG && window.PRIMER_CONFIG.WORKER_URL || "").replace(/\/+$/, "");
 
   // Version stamp — BUMP THIS on each release so a device shows which build it runs.
-  const APP_VERSION = "1.2.0";
+  const APP_VERSION = "1.3.0";
 
   // Per-theme accent colours (kept in sync with the --t-* vars in style.css).
   const THEME_COLORS = {
@@ -365,32 +365,25 @@
   }
 
   /* ------------------------------ MAP ------------------------------------- */
-  let mapHi = null;   // currently highlighted concept id
+  let mapFocus = null;   // concept id currently centered in the ego-graph
+
   function renderMap() {
     const canvas = document.getElementById("mapCanvas");
+    const intro = document.querySelector("#tab-map .map-intro");
     canvas.innerHTML = "";
     document.getElementById("mapEmpty").hidden = concepts.length > 0;
+    if (concepts.length === 0) { if (intro) intro.hidden = true; return; }
 
+    const focus = mapFocus ? findConcept(mapFocus) : null;
+    if (focus) { if (intro) intro.hidden = true; renderEgoGraph(canvas, focus); }
+    else { if (intro) intro.hidden = false; renderMapBrowse(canvas); }
+  }
+
+  // Browse state: theme-grouped chips. Tap one to open its ego-graph.
+  function renderMapBrowse(canvas) {
     const groups = {};
     concepts.forEach((c) => { (groups[c.theme] = groups[c.theme] || []).push(c); });
-    const themes = orderedThemes(groups);
-
-    // links list for the highlighted node
-    const hi = mapHi ? findConcept(mapHi) : null;
-    if (hi) {
-      const linkNames = new Set((hi.connects || []).map((t) => t.toLowerCase()));
-      // also include concepts that link TO this one
-      concepts.forEach((c) => { if ((c.connects || []).some((t) => t.toLowerCase() === hi.term.toLowerCase())) linkNames.add(c.term.toLowerCase()); });
-      const box = document.createElement("div"); box.className = "map-links";
-      const links = (hi.connects || []);
-      box.innerHTML = "<b style='color:var(--teal)'>" + escapeHtml(hi.term) + "</b> connects to: " +
-        (links.length ? links.map(escapeHtml).join(" · ") : "—") + ".";
-      canvas.appendChild(box);
-      var highlightSet = linkNames;
-      var hiTerm = hi.term.toLowerCase();
-    }
-
-    themes.forEach((theme) => {
+    orderedThemes(groups).forEach((theme) => {
       const g = document.createElement("div"); g.className = "map-group";
       const h = document.createElement("div"); h.className = "theme-head";
       h.textContent = theme + " (" + groups[theme].length + ")";
@@ -399,17 +392,86 @@
       groups[theme].sort((a, b) => a.term.localeCompare(b.term)).forEach((c) => {
         const node = document.createElement("span");
         node.className = "map-node";
-        const col = themeColor(c.theme);
-        if (hi) {
-          if (c.term.toLowerCase() === hiTerm) { node.classList.add("hi"); node.style.background = col; node.style.borderColor = col; }
-          else if (highlightSet.has(c.term.toLowerCase())) { node.classList.add("linked"); node.style.color = col; node.style.borderColor = col; }
-        }
         node.textContent = c.term;
-        node.onclick = () => { mapHi = (mapHi === c.id ? null : c.id); renderMap(); };
+        node.style.borderColor = themeColor(c.theme);
+        node.onclick = () => { mapFocus = c.id; renderMap(); document.querySelector("main").scrollTop = 0; };
         g.appendChild(node);
       });
       canvas.appendChild(g);
     });
+  }
+
+  // A concept's neighbours: its own `connects` plus any concept that lists it.
+  function connectionsOf(c) {
+    const names = new Set((c.connects || []).map((t) => t.toLowerCase()));
+    concepts.forEach((o) => { if ((o.connects || []).some((t) => t.toLowerCase() === c.term.toLowerCase())) names.add(o.term.toLowerCase()); });
+    const out = [], seen = new Set();
+    names.forEach((n) => {
+      const hit = concepts.find((o) => o.term.toLowerCase() === n);
+      if (hit && hit.id !== c.id && !seen.has(hit.id)) { seen.add(hit.id); out.push(hit); }
+    });
+    return out;
+  }
+
+  // Ego-graph: the focused concept centred, neighbours fanned around it with
+  // connector lines. Tap a neighbour to re-centre; "Open details" for the full card.
+  function renderEgoGraph(canvas, center) {
+    const bar = document.createElement("div"); bar.className = "ego-bar";
+    const back = document.createElement("button"); back.className = "link-btn"; back.textContent = "← Whole map";
+    back.onclick = () => { mapFocus = null; renderMap(); };
+    const open = document.createElement("button"); open.className = "btn-ghost"; open.textContent = "Open details ▸";
+    open.onclick = () => openConcept(center.id);
+    bar.appendChild(back); bar.appendChild(open);
+    canvas.appendChild(bar);
+
+    const links = connectionsOf(center).slice(0, 8);
+    const stage = document.createElement("div"); stage.className = "ego";
+    canvas.appendChild(stage);
+
+    const W = stage.clientWidth || 320, H = 340;
+    stage.style.height = H + "px";
+    const cx = W / 2, cy = H / 2, R = Math.min(W, H) * 0.33;
+
+    const svgns = "http://www.w3.org/2000/svg";
+    const svg = document.createElementNS(svgns, "svg");
+    svg.setAttribute("width", "100%"); svg.setAttribute("height", String(H));
+    svg.setAttribute("viewBox", "0 0 " + W + " " + H);
+    stage.appendChild(svg);
+
+    const n = links.length;
+    const pos = links.map((c, i) => {
+      const ang = (-90 + i * (360 / Math.max(1, n))) * Math.PI / 180;
+      return { x: cx + R * Math.cos(ang), y: cy + R * Math.sin(ang), c: c };
+    });
+    pos.forEach((p) => {
+      const ln = document.createElementNS(svgns, "line");
+      ln.setAttribute("x1", cx); ln.setAttribute("y1", cy);
+      ln.setAttribute("x2", p.x); ln.setAttribute("y2", p.y);
+      ln.setAttribute("stroke", "#D8D3C4"); ln.setAttribute("stroke-width", "1.5");
+      svg.appendChild(ln);
+    });
+
+    const cnode = document.createElement("div");
+    cnode.className = "ego-node center"; cnode.textContent = center.term;
+    cnode.style.left = cx + "px"; cnode.style.top = cy + "px";
+    cnode.style.background = themeColor(center.theme); cnode.style.borderColor = themeColor(center.theme);
+    cnode.onclick = () => openConcept(center.id);
+    stage.appendChild(cnode);
+
+    pos.forEach((p) => {
+      const nd = document.createElement("div");
+      nd.className = "ego-node sat"; nd.textContent = p.c.term;
+      nd.style.left = p.x + "px"; nd.style.top = p.y + "px";
+      nd.style.color = themeColor(p.c.theme); nd.style.borderColor = themeColor(p.c.theme);
+      nd.onclick = () => { mapFocus = p.c.id; renderMap(); };
+      stage.appendChild(nd);
+    });
+
+    if (n === 0) {
+      const note = document.createElement("div"); note.className = "map-links";
+      note.textContent = "“" + center.term + "” has no connections yet.";
+      canvas.appendChild(note);
+    }
   }
 
   /* ------------------------------ REVIEW ---------------------------------- */

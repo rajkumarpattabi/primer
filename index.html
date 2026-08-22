@@ -44,11 +44,11 @@
 <main>
 
   <!-- ================= CAPTURE ================= -->
-  <section id="tab-capture" class="tab active">
+  <section id="tab-capture" class="tab">
     <div class="capture-box">
       <input id="termInput" class="term-input" type="text" autocomplete="off"
              autocapitalize="none" placeholder="Type any term you heard…">
-      <button id="explainBtn" class="btn-primary">Find</button>
+      <button id="explainBtn" class="btn-primary">Retrieve / Search</button>
       <div id="captureHint" class="capture-hint"></div>
       <div id="captureSuggest" class="suggest-list"></div>
     </div>
@@ -69,7 +69,7 @@
   </section>
 
   <!-- ================= LIBRARY ================= -->
-  <section id="tab-library" class="tab">
+  <section id="tab-library" class="tab active">
     <input id="librarySearch" class="term-input" type="text" autocomplete="off"
            autocapitalize="none" placeholder="Search your library…">
     <div id="libraryList"></div>
@@ -167,8 +167,8 @@
 
 <!-- ================= BOTTOM TAB BAR ================= -->
 <nav class="tabbar">
-  <button class="tabbtn active" data-tab="capture"><span class="tab-ic">＋</span>Capture</button>
-  <button class="tabbtn" data-tab="library"><span class="tab-ic">▤</span>Library</button>
+  <button class="tabbtn active" data-tab="library"><span class="tab-ic">⌂</span>Home</button>
+  <button class="tabbtn" data-tab="capture"><span class="tab-ic">⌕</span>Search</button>
   <button class="tabbtn" data-tab="map"><span class="tab-ic">◈</span>Map</button>
   <button class="tabbtn" data-tab="review"><span class="tab-ic">↻</span>Review</button>
   <button class="tabbtn" data-tab="more"><span class="tab-ic">⚙</span>More</button>

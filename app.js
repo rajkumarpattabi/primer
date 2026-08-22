@@ -24,7 +24,7 @@
   const WORKER_URL = (window.PRIMER_CONFIG && window.PRIMER_CONFIG.WORKER_URL || "").replace(/\/+$/, "");
 
   // Version stamp — BUMP THIS on each release so a device shows which build it runs.
-  const APP_VERSION = "1.3.2";
+  const APP_VERSION = "1.4.0";
 
   // Per-theme accent colours (kept in sync with the --t-* vars in style.css).
   const THEME_COLORS = {
@@ -269,8 +269,8 @@
 
   function setCapturePlaceholder() {
     const i = document.getElementById("termInput");
-    i.placeholder = settings.ghToken ? "Search, or add a new term…"
-      : (WORKER_URL ? "Type any term you heard…" : "Find a concept…");
+    i.placeholder = settings.ghToken ? "Search a term, or add a new one…"
+      : (WORKER_URL ? "Type any term you heard…" : "Search a concept…");
   }
 
   // Live search-as-you-type: show matching concepts and adapt the button
@@ -298,9 +298,9 @@
     }
     const exact = q ? findByTerm(q) : null;
     if (exact) b.textContent = "Open";
-    else if (settings.ghToken) b.textContent = "Add to git";
+    else if (settings.ghToken) b.textContent = "Retrieve / Search";
     else if (WORKER_URL) b.textContent = "Explain & save";
-    else b.textContent = "Find";
+    else b.textContent = "Retrieve / Search";
   }
 
   function renderCapture() {
@@ -694,7 +694,7 @@
     wire();
     renderStreak();
     renderVersion();
-    renderCapture();
+    setTab("library");   // "Home" (library) is the default landing tab
     try { console.log("Primer v" + APP_VERSION + " · " + concepts.length + " concepts"); } catch (e) {}
     if (!m.firstRun && m.added) toast(m.added + (m.added === 1 ? " new concept added" : " new concepts added"));
     if ("serviceWorker" in navigator) {

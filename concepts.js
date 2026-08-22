@@ -376,5 +376,31 @@ window.PRIMER_SEED = [
       { q: "What is explainability in AI?", a: "The ability to understand and justify why a model made a particular decision, rather than treating it as a black box." },
       { q: "Why does explainability matter?", a: "For trust, debugging, detecting bias, and meeting regulations in high-stakes decisions like loans or healthcare." }
     ]
+  },
+  {
+    term: "AI agents", theme: "AI applications",
+    oneLiner: "An AI that can plan, use tools and act toward a goal.",
+    why: "A plain chatbot only answers. An agent is given a goal and can decide steps, call tools (search, code, APIs), check results and keep going until it's done.",
+    analogy: "A capable assistant you hand a goal to — 'book my trip' — who then figures out and does the steps, not just answers questions.",
+    connects: ["Agentic AI", "LangGraph", "LangChain", "Guardrails"],
+    summary: "An AI agent is a single autonomous actor: an LLM plus tools and a loop of plan → act → observe → repeat, working toward a goal.",
+    nextTopics: ["Agentic AI", "Multi-agent systems", "Tool use / function calling"],
+    cards: [
+      { q: "How is an AI agent different from a chatbot?", a: "A chatbot only responds; an agent is given a goal and autonomously plans, uses tools, and acts in a loop until it's achieved." },
+      { q: "What is an AI agent made of?", a: "An LLM 'brain' plus tools it can call and a plan → act → observe loop." }
+    ]
+  },
+  {
+    term: "Agentic AI", theme: "AI applications",
+    oneLiner: "The paradigm of AI that acts autonomously, not just answers.",
+    why: "It names the broader shift from AI that responds to prompts toward AI systems that pursue goals over many steps — often coordinating several agents and tools.",
+    analogy: "'AI agent' is one self-directed employee; 'agentic AI' is running the whole operation with self-directed staff — the approach, not a single worker.",
+    connects: ["AI agents", "LangGraph", "Guardrails"],
+    summary: "Agentic AI is the design approach/property of goal-driven, autonomous, multi-step AI systems; an 'AI agent' is a single actor within that paradigm.",
+    nextTopics: ["Multi-agent systems", "Orchestration frameworks", "Human-in-the-loop"],
+    cards: [
+      { q: "Agentic AI vs an AI agent?", a: "An AI agent is one autonomous actor; agentic AI is the broader paradigm of building systems that act autonomously — often many agents together." },
+      { q: "What defines 'agentic' behaviour?", a: "Goal-driven, autonomous, multi-step action with tool use — rather than one-shot responses to prompts." }
+    ]
   }
 ];

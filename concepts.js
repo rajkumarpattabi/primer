@@ -336,5 +336,45 @@ window.PRIMER_SEED = [
       { q: "What is A/B testing?", a: "A controlled experiment showing version A to some users and B to others, to measure which performs better on a chosen metric." },
       { q: "Why does A/B testing need statistical significance?", a: "To confirm the difference between A and B is real and not just random chance before acting on it." }
     ]
+  },
+  {
+    term: "Model drift", theme: "AI models",
+    oneLiner: "A model gets worse as the world changes around it.",
+    why: "A model is trained on past data; when real-world patterns shift (new behaviour, prices, fraud tactics), its predictions quietly degrade unless it's monitored and retrained.",
+    analogy: "A map of a city that slowly goes stale as new roads are built — still usable at first, wrong over time.",
+    connects: ["Confusion matrix", "Confidence score", "Model types"],
+    summary: "Model drift is the silent decay of a deployed model's accuracy as live data diverges from its training data; the fix is monitoring plus retraining.",
+    nextTopics: ["Data drift vs concept drift", "Model monitoring", "Retraining pipelines"],
+    cards: [
+      { q: "What is model drift?", a: "The gradual drop in a deployed model's accuracy as real-world data drifts away from what it was trained on." },
+      { q: "How do you deal with model drift?", a: "Monitor performance in production and retrain the model on fresh data when it degrades." }
+    ]
+  },
+  {
+    term: "Hallucinations", theme: "AI models",
+    oneLiner: "When an AI states false things as if confidently true.",
+    why: "Language models predict plausible-sounding text, not verified facts — so they can invent details, citations or answers that look right but aren't.",
+    analogy: "A smooth talker who never says 'I don't know' — always gives a confident answer, sometimes made up.",
+    connects: ["Confidence score", "RAG", "Guardrails", "Model types"],
+    summary: "Hallucination is an AI generating confident but false or fabricated content; grounding it with RAG and guardrails reduces it.",
+    nextTopics: ["RAG", "Grounding", "Prompt engineering"],
+    cards: [
+      { q: "What is an AI hallucination?", a: "When a model produces false or fabricated information stated as if it were true." },
+      { q: "Why do hallucinations happen?", a: "Models predict plausible text, not verified facts, so they can invent confident-sounding but wrong answers." },
+      { q: "How can hallucinations be reduced?", a: "Ground the model in real sources (RAG), add guardrails, and ask for citations." }
+    ]
+  },
+  {
+    term: "Explainability", theme: "AI models",
+    oneLiner: "Understanding WHY an AI made a given decision.",
+    why: "Many models are 'black boxes'. In regulated or high-stakes uses (loans, hiring, health) you must be able to justify a decision, spot bias, and build trust.",
+    analogy: "A doctor who not only gives a diagnosis but explains the symptoms and reasoning behind it.",
+    connects: ["Model types", "Collibra", "MetricStream", "Confusion matrix"],
+    summary: "Explainability (XAI) is the ability to show why a model produced an output — essential for trust, debugging, fairness and compliance.",
+    nextTopics: ["SHAP & LIME", "Bias & fairness", "AI governance"],
+    cards: [
+      { q: "What is explainability in AI?", a: "The ability to understand and justify why a model made a particular decision, rather than treating it as a black box." },
+      { q: "Why does explainability matter?", a: "For trust, debugging, detecting bias, and meeting regulations in high-stakes decisions like loans or healthcare." }
+    ]
   }
 ];

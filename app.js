@@ -19,12 +19,12 @@
   const DAY = 86400000;
 
   let concepts = [];                 // [{id, term, theme, ...seed fields, cards:[{q,a,srs}], inReview, createdAt}]
-  let settings = { appKey: "", streak: 0, lastStudy: "" };
+  let settings = { appKey: "", ghToken: "", streak: 0, lastStudy: "" };
 
   const WORKER_URL = (window.PRIMER_CONFIG && window.PRIMER_CONFIG.WORKER_URL || "").replace(/\/+$/, "");
 
   // Version stamp — BUMP THIS on each release so a device shows which build it runs.
-  const APP_VERSION = "1.1.4";
+  const APP_VERSION = "1.1.5";
 
   // Per-theme accent colours (kept in sync with the --t-* vars in style.css).
   const THEME_COLORS = {
@@ -36,6 +36,15 @@
     "Concepts": "#C98A12"
   };
   function themeColor(t) { return THEME_COLORS[t] || "#4C63E6"; }
+
+  // Where the in-app "Queue to git" capture writes (non-secret; token is separate).
+  const GH = {
+    owner: (window.PRIMER_CONFIG && window.PRIMER_CONFIG.GH_OWNER) || "rajkumarpattabi",
+    repo: (window.PRIMER_CONFIG && window.PRIMER_CONFIG.GH_REPO) || "primer",
+    branch: (window.PRIMER_CONFIG && window.PRIMER_CONFIG.GH_BRANCH) || "main"
+  };
+  // UTF-8-safe base64 (GitHub wants file content base64-encoded).
+  function b64(s) { return btoa(unescape(encodeURIComponent(s))); }
 
   function load() {
     try { concepts = JSON.parse(localStorage.getItem(LS_CONCEPTS) || "[]"); } catch (e) { concepts = []; }
@@ -197,8 +206,56 @@
     toast('Not in your library yet — ask Claude to add "' + term + '" and push.');
   }
 
-  // Route the Capture box: live AI if a Worker is configured, else quick-find.
-  function submitCapture() { return WORKER_URL ? doExplain() : doFind(); }
+  // Commit a term straight to the repo's inbox/ folder via the GitHub API, so the
+  // laptop can later turn it into a full concept. Token is stored only on-device.
+  async function queueToGit() {
+    const input = document.getElementById("termInput");
+    const term = input.value.trim();
+    if (!term) return;
+    const hint = document.getElementById("captureHint");
+    const btn = document.getElementById("explainBtn");
+    btn.disabled = true;
+    hint.innerHTML = '<span class="spinner"></span>Queuing “' + escapeHtml(term) + '” to git…';
+    try {
+      const path = "inbox/" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 6) + ".md";
+      const url = "https://api.github.com/repos/" + GH.owner + "/" + GH.repo + "/contents/" + path;
+      const res = await fetch(url, {
+        method: "PUT",
+        headers: {
+          "Authorization": "Bearer " + settings.ghToken,
+          "Accept": "application/vnd.github+json",
+          "X-GitHub-Api-Version": "2022-11-28",
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ message: "capture: " + term, content: b64(term + "\n"), branch: GH.branch })
+      });
+      if (res.status === 401 || res.status === 403) { hint.textContent = "GitHub token rejected or lacks access. Check it in More →."; btn.disabled = false; return; }
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      input.value = ""; hint.textContent = "";
+      toast("Queued “" + term + "” to git — becomes a full concept after the next laptop sync.");
+    } catch (e) {
+      hint.textContent = "Couldn't reach GitHub (" + (e.message || e) + "). Check your connection or token.";
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
+  // Route the Capture box: queue-to-git if a token is set, else live AI (if a
+  // Worker is configured), else a quick "find a concept".
+  function submitCapture() {
+    if (settings.ghToken) return queueToGit();
+    if (WORKER_URL) return doExplain();
+    return doFind();
+  }
+
+  // Label the Capture box for whichever mode is active.
+  function updateCaptureLabel() {
+    const b = document.getElementById("explainBtn");
+    const i = document.getElementById("termInput");
+    if (settings.ghToken) { b.textContent = "Queue to git"; i.placeholder = "Add a term to your git inbox…"; }
+    else if (WORKER_URL) { b.textContent = "Explain & save"; i.placeholder = "Type any term you heard…"; }
+    else { b.textContent = "Find"; i.placeholder = "Find a concept…"; }
+  }
 
   function renderCapture() {
     renderStreak();
@@ -440,6 +497,8 @@
     else if (!settings.appKey) status.textContent = "Worker set — enter pass-phrase below";
     else status.textContent = "ready";
     document.getElementById("appKeyInput").value = settings.appKey || "";
+    document.getElementById("ghTokenInput").value = settings.ghToken || "";
+    document.getElementById("ghStatus").textContent = settings.ghToken ? "set — Capture writes to git" : "not set";
     renderVersion();
     document.getElementById("settingsSheet").hidden = false;
   }
@@ -493,8 +552,7 @@
     // Adapt the Capture box to whether live AI Capture is enabled (backlog by default).
     const explainBtn = document.getElementById("explainBtn");
     const termInput = document.getElementById("termInput");
-    if (WORKER_URL) { explainBtn.textContent = "Explain & save"; termInput.placeholder = "Type any term you heard…"; }
-    else { explainBtn.textContent = "Find"; termInput.placeholder = "Find a concept…"; }
+    updateCaptureLabel();
     explainBtn.onclick = submitCapture;
     termInput.addEventListener("keydown", (e) => { if (e.key === "Enter") submitCapture(); });
     document.getElementById("librarySearch").addEventListener("input", renderLibrary);
@@ -506,6 +564,10 @@
     document.getElementById("saveKeyBtn").onclick = () => {
       settings.appKey = document.getElementById("appKeyInput").value.trim(); saveSettings();
       openSettings(); toast("Saved");
+    };
+    document.getElementById("saveGhBtn").onclick = () => {
+      settings.ghToken = document.getElementById("ghTokenInput").value.trim(); saveSettings();
+      updateCaptureLabel(); openSettings(); toast("Token saved");
     };
     document.getElementById("exportBtn").onclick = exportBackup;
     document.getElementById("importFile").onchange = (e) => { if (e.target.files[0]) importBackup(e.target.files[0]); };

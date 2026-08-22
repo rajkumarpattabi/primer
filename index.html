@@ -128,6 +128,18 @@
       <button id="saveKeyBtn" class="btn-ghost">Save pass-phrase</button>
     </div>
     <div class="card">
+      <h4>Capture to git</h4>
+      <p class="muted-p">With a token set, the Capture tab commits each term
+         straight to your repo's inbox, ready for the laptop to turn into a full
+         concept. Use a GitHub <b>fine-grained</b> token limited to
+         <code>Contents: write</code> on the <code>primer</code> repo. It's stored
+         only on this device — never in the app or repo.</p>
+      <input id="ghTokenInput" class="term-input" type="password"
+             placeholder="GitHub token (github_pat_…)">
+      <button id="saveGhBtn" class="btn-ghost">Save token</button>
+      <p class="muted-p">Status: <b id="ghStatus">not set</b></p>
+    </div>
+    <div class="card">
       <h4>Your data</h4>
       <p class="muted-p">Everything lives only in this browser. Export a backup
          you can keep, or import one.</p>

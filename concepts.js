@@ -402,5 +402,58 @@ window.PRIMER_SEED = [
       { q: "Agentic AI vs an AI agent?", a: "An AI agent is one autonomous actor; agentic AI is the broader paradigm of building systems that act autonomously — often many agents together." },
       { q: "What defines 'agentic' behaviour?", a: "Goal-driven, autonomous, multi-step action with tool use — rather than one-shot responses to prompts." }
     ]
+  },
+  {
+    term: "Precision vs recall", theme: "AI models",
+    oneLiner: "Two ways to be right — avoiding false alarms vs misses.",
+    why: "One accuracy number hides the trade-off between two kinds of mistake; precision and recall separate them so you can optimise for the one that matters.",
+    analogy: "Fishing with a net: precision = how much of your catch is the fish you wanted; recall = how many of all the fish in the lake you actually caught.",
+    connects: ["Confusion matrix", "Confidence score", "A/B testing"],
+    summary: "Precision = of the items flagged positive, how many were right; recall = of all real positives, how many you caught. Raising one usually lowers the other.",
+    nextTopics: ["F1 score", "ROC curve & AUC", "Thresholding"],
+    cards: [
+      { q: "What is precision?", a: "Of everything the model flagged as positive, the fraction that was actually correct (few false alarms)." },
+      { q: "What is recall?", a: "Of all the real positives, the fraction the model actually caught (few misses)." },
+      { q: "Why can't you always maximise both?", a: "They trade off — being stricter raises precision but lowers recall, and vice versa; F1 balances them." }
+    ]
+  },
+  {
+    term: "MLOps", theme: "Ways of working",
+    oneLiner: "DevOps for machine-learning models in production.",
+    why: "Getting a model into production and keeping it healthy (deploying, monitoring, retraining as it drifts) needs its own practices beyond normal software delivery.",
+    analogy: "A pit crew for a race car: not just building it, but constantly refuelling, checking and tuning it while it runs.",
+    connects: ["Model drift", "DevSecOps", "FinOps", "Databricks"],
+    summary: "MLOps is the set of practices and tooling to reliably deploy, monitor, and retrain ML models in production — DevOps adapted for models and data.",
+    nextTopics: ["Model drift", "Model monitoring", "CI/CD"],
+    cards: [
+      { q: "What is MLOps?", a: "Practices for reliably deploying, monitoring and retraining machine-learning models in production — DevOps applied to ML." },
+      { q: "Why does ML need its own 'ops'?", a: "Models degrade as data drifts and depend on data + retraining, so they need monitoring and pipelines beyond normal software delivery." }
+    ]
+  },
+  {
+    term: "DevSecOps", theme: "Ways of working",
+    oneLiner: "Building security into development, not bolting it on.",
+    why: "Treating security as a final gate causes late, costly surprises; DevSecOps bakes security checks into every step of the build-and-ship pipeline.",
+    analogy: "Food safety checked at every stage of the kitchen, not just one inspector at the exit door.",
+    connects: ["MLOps", "FinOps", "Guardrails"],
+    summary: "DevSecOps extends DevOps by embedding automated security throughout the development lifecycle — 'shift security left' so issues are caught early.",
+    nextTopics: ["DevOps", "Shift-left security", "CI/CD"],
+    cards: [
+      { q: "What does DevSecOps add to DevOps?", a: "Security built into every stage of the pipeline (automated scans, checks) instead of a final gate." },
+      { q: "What does 'shift security left' mean?", a: "Catch security issues early in development rather than late before release." }
+    ]
+  },
+  {
+    term: "FinOps", theme: "Ways of working",
+    oneLiner: "Managing and optimising cloud spend as a team practice.",
+    why: "Cloud costs are easy to run up and hard to see; FinOps gives engineering, finance and business a shared way to track, allocate and reduce spend.",
+    analogy: "A household budget for the cloud — everyone can see the bill and is accountable for their share.",
+    connects: ["MLOps", "DevSecOps"],
+    summary: "FinOps is the practice of bringing financial accountability to variable cloud spend, so teams make cost-aware decisions without slowing down.",
+    nextTopics: ["Cloud cost optimisation", "Showback vs chargeback", "Unit economics"],
+    cards: [
+      { q: "What is FinOps?", a: "A practice for managing and optimising cloud spend collaboratively across engineering, finance and business." },
+      { q: "MLOps vs DevSecOps vs FinOps in one line?", a: "MLOps runs ML models reliably; DevSecOps builds security into delivery; FinOps controls cloud cost — three 'ops' disciplines for different concerns." }
+    ]
   }
 ];

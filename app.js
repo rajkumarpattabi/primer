@@ -24,7 +24,7 @@
   const WORKER_URL = (window.PRIMER_CONFIG && window.PRIMER_CONFIG.WORKER_URL || "").replace(/\/+$/, "");
 
   // Version stamp — BUMP THIS on each release so a device shows which build it runs.
-  const APP_VERSION = "1.6.2";
+  const APP_VERSION = "1.7.0";
 
   // Per-theme accent colours (kept in sync with the --t-* vars in style.css).
   const THEME_COLORS = {
@@ -89,8 +89,26 @@
       if (k && !seen.has(k)) { seen.add(k); merged.push(normaliseConcept(s, true)); added++; }
     });
 
+    // Refresh static content from the seed so edits/new fields (e.g. brief)
+    // reach already-stored concepts, while preserving runtime state
+    // (cards + srs, inReview, read, createdAt).
+    const seedByTerm = {};
+    (window.PRIMER_SEED || []).forEach((s) => { seedByTerm[(s.term || "").trim().toLowerCase()] = s; });
+    merged.forEach((c) => {
+      const s = seedByTerm[(c.term || "").trim().toLowerCase()];
+      if (!s) return;
+      c.theme = s.theme || c.theme;
+      c.oneLiner = s.oneLiner || "";
+      c.why = s.why || "";
+      c.analogy = s.analogy || "";
+      c.connects = Array.isArray(s.connects) ? s.connects : [];
+      c.summary = s.summary || "";
+      c.brief = s.brief || "";
+      c.nextTopics = Array.isArray(s.nextTopics) ? s.nextTopics : [];
+    });
+
     concepts = merged;
-    if (firstRun || added || dupsRemoved) saveConcepts();
+    saveConcepts();
     return { firstRun, added };
   }
 
@@ -114,6 +132,7 @@
       cards: cards,
       inReview: inReview !== false,
       read: raw.read || false,
+      brief: raw.brief || "",
       createdAt: raw.createdAt || now
     };
   }
@@ -768,8 +787,8 @@
       block("Why it exists", c.why) +
       block("Analogy", c.analogy) +
       connectsHtml +
-      block("In one line", c.summary) +
-      nextHtml;
+      nextHtml +
+      block("Briefly", c.brief);
     body.querySelectorAll(".detail-block .lbl").forEach((el) => { el.style.color = col; });
 
     // wire connect chips -> open or capture

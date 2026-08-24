@@ -11,7 +11,7 @@
  * left to go straight to the network (never cached).
  * Bump CACHE_NAME on every deploy so the new worker replaces the old cache.
  * ==========================================================================*/
-const CACHE_NAME = "primer-v19";
+const CACHE_NAME = "primer-v20";
 const ASSETS = [
   "./",
   "./index.html",

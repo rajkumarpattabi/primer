@@ -203,6 +203,10 @@ code { background: var(--surface-2); border: 1px solid var(--line); padding: 1px
   font-size: 13px; font-weight: 600; color: #fff; max-width: 150px; padding: 10px 12px;
   box-shadow: 0 2px 10px rgba(30,30,40,0.18);
 }
+.ego-node.d2 {
+  font-size: 9px; padding: 4px 7px; max-width: 84px; opacity: 0.7;
+  box-shadow: 0 1px 2px rgba(30,30,40,0.06);
+}
 
 /* ---- Review tab ---- */
 .review-area { padding-top: 8px; }
@@ -221,6 +225,22 @@ code { background: var(--surface-2); border: 1px solid var(--line); padding: 1px
   box-shadow: 0 2px 8px rgba(30,30,40,0.05); touch-action: pan-y;
 }
 .skip-btn { display: block; width: 100%; text-align: center; margin-top: 4px; color: var(--muted); }
+.progress { height: 6px; background: var(--line); border-radius: 999px; overflow: hidden; margin: 2px 0 12px; }
+.progress-fill { height: 100%; background: var(--accent); border-radius: 999px; transition: width 0.25s ease; }
+.review-actions { display: flex; align-items: center; justify-content: space-between; margin-top: 6px; }
+.review-actions .link-btn { color: var(--muted); }
+.review-actions .link-btn:last-child { color: var(--accent); }
+.summary-tally { display: flex; gap: 8px; justify-content: center; margin: 12px 0 16px; font-size: 13px; font-weight: 600; }
+.summary-tally span { padding: 5px 11px; border-radius: 999px; border: 1px solid var(--line); }
+.review-filter { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 8px; margin-bottom: 6px; -webkit-overflow-scrolling: touch; }
+.rf-chip {
+  flex: none; font-size: 12px; padding: 6px 11px; border-radius: 999px;
+  border: 1px solid var(--line-2); background: var(--surface); color: var(--muted);
+  cursor: pointer; white-space: nowrap; -webkit-tap-highlight-color: transparent;
+}
+.rf-chip.on { background: var(--accent); color: #fff; border-color: var(--accent); }
+.reverse-tag { color: var(--muted) !important; font-weight: 600; }
+.leech-badge { position: absolute; top: 10px; left: 12px; font-size: 10px; color: var(--chili); font-weight: 700; }
 .flash-term { font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 12px; font-weight: 700; }
 .flash-q { font-size: 18px; line-height: 1.5; color: var(--ink); }
 .flash-a { font-size: 15px; line-height: 1.6; color: var(--muted); margin-top: 14px; border-top: 1px solid var(--line); padding-top: 14px; }

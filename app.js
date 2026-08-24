@@ -24,7 +24,7 @@
   const WORKER_URL = (window.PRIMER_CONFIG && window.PRIMER_CONFIG.WORKER_URL || "").replace(/\/+$/, "");
 
   // Version stamp — BUMP THIS on each release so a device shows which build it runs.
-  const APP_VERSION = "1.5.0";
+  const APP_VERSION = "1.6.0";
 
   // Per-theme accent colours (kept in sync with the --t-* vars in style.css).
   const THEME_COLORS = {
@@ -128,7 +128,7 @@
   function grade(card, g) {
     const now = Date.now();
     const s = card.srs;
-    if (g === "again") { s.interval = 0; s.reps = 0; s.due = now + 10 * 60 * 1000; }
+    if (g === "again") { s.interval = 0; s.reps = 0; s.due = now + 10 * 60 * 1000; s.lapses = (s.lapses || 0) + 1; }
     else {
       const factor = g === "easy" ? 3.0 : 2.2;
       if (s.reps === 0) s.interval = g === "easy" ? 3 : 1;
@@ -441,9 +441,12 @@
     const stage = document.createElement("div"); stage.className = "ego";
     canvas.appendChild(stage);
 
-    const W = stage.clientWidth || 320, H = 340;
+    const W = stage.clientWidth || 340, H = 420;
     stage.style.height = H + "px";
-    const cx = W / 2, cy = H / 2, R = Math.min(W, H) * 0.33;
+    const cx = W / 2, cy = H / 2, R = Math.min(W, H) * 0.30;
+    const pad = 38;
+    const clampX = (x) => Math.max(pad, Math.min(W - pad, x));
+    const clampY = (y) => Math.max(pad, Math.min(H - pad, y));
 
     const svgns = "http://www.w3.org/2000/svg";
     const svg = document.createElementNS(svgns, "svg");
@@ -451,18 +454,50 @@
     svg.setAttribute("viewBox", "0 0 " + W + " " + H);
     stage.appendChild(svg);
 
+    // draw a gentle curved connector between two points
+    function curve(x1, y1, x2, y2, faint) {
+      const mx = (x1 + x2) / 2, my = (y1 + y2) / 2;
+      const dx = x2 - x1, dy = y2 - y1, len = Math.hypot(dx, dy) || 1;
+      const off = Math.min(26, len * 0.16);
+      const cxp = mx + (-dy / len) * off, cyp = my + (dx / len) * off;
+      const path = document.createElementNS(svgns, "path");
+      path.setAttribute("d", "M" + x1 + "," + y1 + " Q" + cxp + "," + cyp + " " + x2 + "," + y2);
+      path.setAttribute("fill", "none");
+      path.setAttribute("stroke", faint ? "#E7E3D8" : "#CFC9B8");
+      path.setAttribute("stroke-width", faint ? "1" : "1.6");
+      svg.appendChild(path);
+    }
+
     const n = links.length;
     const pos = links.map((c, i) => {
       const ang = (-90 + i * (360 / Math.max(1, n))) * Math.PI / 180;
-      return { x: cx + R * Math.cos(ang), y: cy + R * Math.sin(ang), c: c };
+      return { x: clampX(cx + R * Math.cos(ang)), y: clampY(cy + R * Math.sin(ang)), c: c, ang: ang };
     });
-    pos.forEach((p) => {
-      const ln = document.createElementNS(svgns, "line");
-      ln.setAttribute("x1", cx); ln.setAttribute("y1", cy);
-      ln.setAttribute("x2", p.x); ln.setAttribute("y2", p.y);
-      ln.setAttribute("stroke", "#D8D3C4"); ln.setAttribute("stroke-width", "1.5");
-      svg.appendChild(ln);
-    });
+
+    // second-degree connections (faint) — only when the inner ring isn't crowded
+    const placed = new Set([center.id].concat(links.map((c) => c.id)));
+    let d2count = 0;
+    if (n > 0 && n <= 6) {
+      pos.forEach((p) => {
+        connectionsOf(p.c).filter((o) => !placed.has(o.id)).slice(0, 2).forEach((o, j) => {
+          if (d2count >= 8) return;
+          placed.add(o.id); d2count++;
+          const a2 = p.ang + (j === 0 ? -0.32 : 0.32);
+          const R2 = R * 1.85;
+          const x2 = clampX(cx + R2 * Math.cos(a2)), y2 = clampY(cy + R2 * Math.sin(a2));
+          curve(p.x, p.y, x2, y2, true);
+          const nd2 = document.createElement("div");
+          nd2.className = "ego-node d2"; nd2.textContent = o.term;
+          nd2.style.left = x2 + "px"; nd2.style.top = y2 + "px";
+          nd2.style.color = themeColor(o.theme); nd2.style.borderColor = themeColor(o.theme);
+          nd2.onclick = () => { mapFocus = o.id; renderMap(); };
+          stage.appendChild(nd2);
+        });
+      });
+    }
+
+    // depth-1 curved connectors
+    pos.forEach((p) => curve(cx, cy, p.x, p.y, false));
 
     const cnode = document.createElement("div");
     cnode.className = "ego-node center"; cnode.textContent = center.term;
@@ -488,20 +523,72 @@
   }
 
   /* ------------------------------ REVIEW ---------------------------------- */
+  const LEECH = 3;                 // failures before a card is flagged "hard"
   let queue = [];
   let revealed = false;
+  let sessionTotal = 0, sessionGraded = 0, sessionTally = { again: 0, good: 0, easy: 0 };
+  let reviewFilter = null;         // null=due only | theme name | "__hard__"
+  let currentReversed = false;     // this card shown answer-first?
+  let lastUndo = null;             // { item, prevSrs, g } for undo
+
+  function nextOrientation() { currentReversed = Math.random() < 0.33; }
+
+  // Which cards to review, per the active filter.
+  function reviewQueue() {
+    const out = [];
+    if (reviewFilter === "__hard__") {
+      concepts.forEach((c) => { if (c.inReview) c.cards.forEach((card, i) => { if ((card.srs.lapses || 0) >= LEECH) out.push({ concept: c, card: card, i: i }); }); });
+      return out;
+    }
+    if (reviewFilter) {
+      concepts.forEach((c) => { if (c.inReview && c.theme === reviewFilter) c.cards.forEach((card, i) => out.push({ concept: c, card: card, i: i })); });
+      return out;
+    }
+    return dueCards();
+  }
+
+  function reviewThemes() { const s = new Set(); concepts.forEach((c) => { if (c.inReview) s.add(c.theme); }); return [...s]; }
+  function leechCount() { let n = 0; concepts.forEach((c) => { if (c.inReview) c.cards.forEach((cd) => { if ((cd.srs.lapses || 0) >= LEECH) n++; }); }); return n; }
+
+  function filterBarHtml() {
+    const lc = leechCount();
+    let chips = '<button class="rf-chip' + (reviewFilter === null ? " on" : "") + '" data-f="__all__">All due</button>';
+    if (lc > 0) chips += '<button class="rf-chip' + (reviewFilter === "__hard__" ? " on" : "") + '" data-f="__hard__">★ Hard (' + lc + ")</button>";
+    reviewThemes().forEach((t) => { chips += '<button class="rf-chip' + (reviewFilter === t ? " on" : "") + '" data-f="' + escapeHtml(t) + '">' + escapeHtml(t) + "</button>"; });
+    return '<div class="review-filter" id="reviewFilter">' + chips + "</div>";
+  }
+  function wireFilterBar() {
+    document.querySelectorAll("#reviewFilter .rf-chip").forEach((ch) => {
+      ch.onclick = () => { const f = ch.getAttribute("data-f"); reviewFilter = (f === "__all__" ? null : f); renderReview(); };
+    });
+  }
+
+  function undoLast() {
+    if (!lastUndo) return;
+    lastUndo.item.card.srs = lastUndo.prevSrs;
+    saveConcepts();
+    queue.unshift(lastUndo.item);
+    sessionGraded = Math.max(0, sessionGraded - 1);
+    sessionTally[lastUndo.g] = Math.max(0, (sessionTally[lastUndo.g] || 0) - 1);
+    revealed = true; lastUndo = null;
+    showCard();
+  }
+
   function renderReview() {
-    queue = dueCards();
-    revealed = false;
+    queue = reviewQueue();
+    revealed = false; lastUndo = null;
+    sessionTotal = queue.length; sessionGraded = 0; sessionTally = { again: 0, good: 0, easy: 0 };
+    nextOrientation();
     const area = document.getElementById("reviewArea");
     if (queue.length === 0) {
       const totalInReview = concepts.filter((c) => c.inReview).length;
-      area.innerHTML =
-        '<div class="review-done"><div class="big">✓</div>' +
-        (totalInReview === 0
-          ? "<p>No cards in review yet. Open a concept and tap <b>＋ Add to review</b>.</p>"
-          : "<p>All caught up. Nothing due right now — come back later.</p>") +
-        "</div>";
+      const msg = reviewFilter
+        ? "Nothing to review in this filter."
+        : (totalInReview === 0
+            ? "No cards in review yet. Open a concept and tap <b>＋ Add to review</b>."
+            : "All caught up. Nothing due right now — come back later.");
+      area.innerHTML = filterBarHtml() + '<div class="review-done"><div class="big">✓</div><p>' + msg + "</p></div>";
+      wireFilterBar();
       return;
     }
     showCard();
@@ -510,7 +597,7 @@
   function showCard() {
     const area = document.getElementById("reviewArea");
     const item = queue[0];
-    if (!item) { renderReview(); return; }
+    if (!item) { showSummary(); return; }
     const c = item.concept, card = item.card;
 
     // stacked deck: up to 3 ghost cards peeking behind the active one
@@ -519,14 +606,31 @@
     for (let i = ghosts; i >= 1; i--) {
       ghostHtml += '<div class="flash-ghost" style="transform:translateY(' + (i * 9) + 'px) scale(' + (1 - i * 0.035) + ');opacity:' + (0.55 - i * 0.13) + '"></div>';
     }
+    const pct = sessionTotal ? Math.round((sessionGraded / sessionTotal) * 100) : 0;
+    const reversed = currentReversed;
+    const isLeech = (card.srs.lapses || 0) >= LEECH;
+
+    let inner;
+    if (!reversed) {
+      inner =
+        '<div class="flash-term">' + escapeHtml(c.term) + "</div>" +
+        '<div class="flash-q">' + escapeHtml(card.q) + "</div>" +
+        (revealed ? '<div class="flash-a">' + escapeHtml(card.a) + "</div>" : "");
+    } else {
+      inner =
+        '<div class="flash-term reverse-tag">Reverse · name the concept</div>' +
+        '<div class="flash-q">' + escapeHtml(card.a) + "</div>" +
+        (revealed ? '<div class="flash-a"><b>' + escapeHtml(c.term) + "</b><br>" + escapeHtml(card.q) + "</div>" : "");
+    }
 
     area.innerHTML =
-      '<div class="section-cap">Card 1 of ' + queue.length + " due</div>" +
+      filterBarHtml() +
+      '<div class="section-cap">Card ' + (sessionGraded + 1) + " of " + sessionTotal + "</div>" +
+      '<div class="progress"><div class="progress-fill" style="width:' + pct + '%"></div></div>' +
       '<div class="flash-stack">' + ghostHtml +
         '<div class="flashcard" id="activeCard">' +
-          '<div class="flash-term">' + escapeHtml(c.term) + "</div>" +
-          '<div class="flash-q">' + escapeHtml(card.q) + "</div>" +
-          (revealed ? '<div class="flash-a">' + escapeHtml(card.a) + "</div>" : "") +
+          (isLeech ? '<span class="leech-badge">★ hard</span>' : "") +
+          inner +
         "</div>" +
       "</div>" +
       (revealed
@@ -536,26 +640,63 @@
             '<button class="btn-ghost g-easy" data-g="easy">Easy</button>' +
           "</div>"
         : '<button class="btn-primary show-btn" id="showAnsBtn">Show answer</button>') +
-      '<button class="link-btn skip-btn" id="skipBtn">↦ Skip (or swipe the card)</button>';
+      '<div class="review-actions">' +
+        '<button class="link-btn" id="skipBtn">↦ Skip</button>' +
+        (lastUndo ? '<button class="link-btn" id="undoBtn">↶ Undo</button>' : "") +
+        '<button class="link-btn" id="openConceptLink">View concept ▸</button>' +
+      "</div>";
 
-    const ft = area.querySelector(".flash-term"); if (ft) ft.style.color = themeColor(c.theme);
+    const ft = area.querySelector(".flash-term");
+    if (ft) ft.style.color = reversed ? "var(--muted)" : themeColor(c.theme);
+    wireFilterBar();
     attachSwipe(document.getElementById("activeCard"));
     document.getElementById("skipBtn").onclick = skipCard;
+    document.getElementById("openConceptLink").onclick = () => openConcept(c.id);
+    if (lastUndo) document.getElementById("undoBtn").onclick = undoLast;
 
     if (!revealed) {
       document.getElementById("showAnsBtn").onclick = () => { revealed = true; showCard(); };
     } else {
       area.querySelectorAll(".grade-row .btn-ghost").forEach((b) => {
-        b.onclick = () => { grade(card, b.dataset.g); queue.shift(); revealed = false; showCard(); renderStreak(); };
+        b.onclick = () => {
+          const g = b.dataset.g;
+          lastUndo = { item: queue[0], prevSrs: JSON.parse(JSON.stringify(card.srs)), g: g };
+          grade(card, g);
+          sessionGraded++; sessionTally[g] = (sessionTally[g] || 0) + 1;
+          queue.shift(); revealed = false; renderStreak(); nextOrientation();
+          if (queue.length) showCard(); else showSummary();
+        };
       });
     }
+  }
+
+  // End-of-session summary: how many reviewed, and the Again/Good/Easy breakdown.
+  function showSummary() {
+    const area = document.getElementById("reviewArea");
+    const lc = leechCount();
+    area.innerHTML =
+      filterBarHtml() +
+      '<div class="review-done"><div class="big">✓</div>' +
+      "<p><b>" + sessionGraded + "</b> card" + (sessionGraded === 1 ? "" : "s") + " reviewed this session.</p>" +
+      '<div class="summary-tally">' +
+        '<span class="g-again">Again ' + sessionTally.again + "</span>" +
+        '<span class="g-good">Good ' + sessionTally.good + "</span>" +
+        '<span class="g-easy">Easy ' + sessionTally.easy + "</span>" +
+      "</div>" +
+      (lc > 0 ? '<p class="muted-p">' + lc + " hard card" + (lc === 1 ? "" : "s") + " flagged — tap ★ Hard above to drill them.</p>" : "") +
+      (lastUndo ? '<button class="btn-ghost" id="undoBtn">↶ Undo last</button> ' : "") +
+      '<button class="btn-ghost" id="reviewAgainBtn">Review again</button>' +
+      "</div>";
+    wireFilterBar();
+    if (lastUndo) document.getElementById("undoBtn").onclick = undoLast;
+    document.getElementById("reviewAgainBtn").onclick = renderReview;
   }
 
   // Skip: move the current card to the back of the queue.
   function skipCard() {
     if (queue.length <= 1) { toast("That's the only card left"); return; }
     queue.push(queue.shift());
-    revealed = false;
+    revealed = false; nextOrientation();
     showCard();
   }
 

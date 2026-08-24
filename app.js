@@ -24,7 +24,7 @@
   const WORKER_URL = (window.PRIMER_CONFIG && window.PRIMER_CONFIG.WORKER_URL || "").replace(/\/+$/, "");
 
   // Version stamp — BUMP THIS on each release so a device shows which build it runs.
-  const APP_VERSION = "1.8.0";
+  const APP_VERSION = "1.8.1";
 
   // Per-theme accent colours (kept in sync with the --t-* vars in style.css).
   const THEME_COLORS = {
@@ -312,15 +312,6 @@
       });
       const cap = document.getElementById("recentCap");
       if (cap) cap.hidden = concepts.length === 0;
-    }
-    const nudge = document.getElementById("dueNudge");
-    if (nudge) {
-      const due = dueCards().length;
-      nudge.hidden = due === 0;
-      if (due > 0) {
-        nudge.textContent = due + (due === 1 ? " card due · Review →" : " cards due · Review →");
-        nudge.onclick = () => setTab("review");
-      }
     }
   }
 

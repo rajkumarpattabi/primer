@@ -1510,5 +1510,20 @@ window.PRIMER_SEED = [
       }
     ],
     "brief": "Multithreading runs several threads within one process that share the same memory, so work overlaps and multi-core CPUs stay busy while the program stays responsive. That shared memory is also the danger: two threads touching the same data can race and corrupt it, so you need synchronisation (locks, atomics) — and getting that balance right is what makes concurrent programming hard."
+  },
+  {
+    "term": "Concurrency vs parallelism",
+    "theme": "Concepts",
+    "oneLiner": "Juggling many tasks vs doing many at once.",
+    "why": "The terms are constantly mixed up, yet they solve different problems: concurrency is about structuring a program to make progress on many tasks, while parallelism is about actually executing many at the same instant.",
+    "analogy": "One barista alternating between several orders is concurrency; four baristas each making one drink is parallelism.",
+    "connects": ["Multithreading"],
+    "summary": "Concurrency is managing many overlapping tasks (possible even on one core); parallelism is literally running many at the same time on multiple cores — you can have either without the other.",
+    "nextTopics": ["Multithreading", "Async / await", "Race conditions"],
+    "cards": [
+      { "q": "Concurrency vs parallelism?", "a": "Concurrency = structuring work to juggle many tasks that overlap in progress; parallelism = executing many at the same instant on multiple cores." },
+      { "q": "Can you have concurrency without parallelism?", "a": "Yes — a single core can interleave many tasks (concurrent) without ever running two at the exact same moment (not parallel)." }
+    ],
+    "brief": "Concurrency is a way of structuring a program so it can make progress on many tasks that overlap in time — even a single CPU core achieves it by rapidly switching between them. Parallelism is the hardware reality of executing multiple tasks at the literally same instant, which needs multiple cores or machines. They often appear together but are independent: you can be concurrent without being parallel (one core interleaving work) or parallel without much concurrency (one big computation split across cores). Grasping the difference explains why simply adding cores doesn't speed up a program that isn't structured to use them."
   }
 ];

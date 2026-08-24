@@ -1525,5 +1525,64 @@ window.PRIMER_SEED = [
       { "q": "Can you have concurrency without parallelism?", "a": "Yes — a single core can interleave many tasks (concurrent) without ever running two at the exact same moment (not parallel)." }
     ],
     "brief": "Concurrency is a way of structuring a program so it can make progress on many tasks that overlap in time — even a single CPU core achieves it by rapidly switching between them. Parallelism is the hardware reality of executing multiple tasks at the literally same instant, which needs multiple cores or machines. They often appear together but are independent: you can be concurrent without being parallel (one core interleaving work) or parallel without much concurrency (one big computation split across cores). Grasping the difference explains why simply adding cores doesn't speed up a program that isn't structured to use them."
+  },
+  {
+    "term": "SRE",
+    "theme": "Ways of working",
+    "oneLiner": "Running reliable systems with engineering, not just ops.",
+    "why": "Google's answer to keeping large services reliable: apply software engineering to operations, and manage reliability with explicit targets and error budgets instead of chasing an impossible 100% uptime.",
+    "analogy": "Treating 'keeping the lights on' as an engineering problem to automate away, not a night-shift chore to endure.",
+    "connects": ["Chaos Engineering", "DevSecOps", "Performance Testing"],
+    "summary": "Site Reliability Engineering applies software engineering to operations, using SLOs and error budgets to balance reliability against feature velocity.",
+    "nextTopics": ["SLO / SLA / SLI", "Error budgets", "Chaos Engineering"],
+    "cards": [
+      { "q": "What is SRE?", "a": "Site Reliability Engineering — applying software-engineering practices to operations to run scalable, reliable systems." },
+      { "q": "What's an error budget?", "a": "The allowed amount of unreliability (e.g. 0.1% downtime); spend it shipping features, and if it runs out, focus shifts back to stability." }
+    ],
+    "brief": "SRE, originated at Google, treats operations as a software problem: automate toil, instrument everything, and define reliability numerically with SLIs (indicators), SLOs (objectives) and SLAs (agreements). Its signature idea is the error budget — the small amount of failure an SLO permits — which turns the tug-of-war between shipping features and staying stable into an explicit, shared trade-off. When the budget is healthy teams ship freely; when it's exhausted they stop and harden the system. SRE overlaps heavily with DevOps and leans on practices like chaos engineering and strong observability."
+  },
+  {
+    "term": "Chaos Engineering",
+    "theme": "Ways of working",
+    "oneLiner": "Deliberately breaking systems to prove they cope.",
+    "why": "You can't be sure a system survives failures until you cause them on purpose; chaos engineering runs controlled experiments (killing servers, adding latency) to expose weaknesses before real outages do.",
+    "analogy": "A fire drill for your infrastructure — start a controlled fire to check the alarms and exits actually work.",
+    "connects": ["Chaos Testing", "SRE", "DevSecOps"],
+    "summary": "A discipline of running controlled failure experiments on a (often production) system to build confidence in its resilience.",
+    "nextTopics": ["SRE", "Chaos Testing", "Observability"],
+    "cards": [
+      { "q": "What is chaos engineering?", "a": "Deliberately injecting controlled failures into a system to discover weaknesses and prove it can withstand turbulent conditions." },
+      { "q": "Why run it in production?", "a": "Only real production conditions reveal how the whole system truly behaves under failure; experiments are scoped and safeguarded to limit blast radius." }
+    ],
+    "brief": "Chaos engineering flips testing on its head: instead of checking that things work, you deliberately inject failures — terminating instances, throttling networks, exhausting resources — to see whether the system degrades gracefully. Each experiment starts from a hypothesis ('if this node dies, traffic reroutes with no user impact'), runs with a limited blast radius and an abort switch, and surfaces hidden weaknesses before a real incident does. Popularised by Netflix's Chaos Monkey, it's now a core practice for teams running large distributed systems and pairs naturally with SRE and strong observability."
+  },
+  {
+    "term": "Chaos Testing",
+    "theme": "Ways of working",
+    "oneLiner": "Injecting specific failures to test resilience.",
+    "why": "It's the hands-on practice within chaos engineering: run a test that kills a dependency or adds latency and verify the system still behaves acceptably.",
+    "analogy": "Yanking one plug to check the backup generator actually kicks in.",
+    "connects": ["Chaos Engineering", "Performance Testing", "SRE"],
+    "summary": "The practice of injecting particular faults to verify a system's resilience; chaos engineering is the broader discipline it belongs to.",
+    "nextTopics": ["Chaos Engineering", "SRE", "Performance Testing"],
+    "cards": [
+      { "q": "Chaos testing vs chaos engineering?", "a": "Chaos testing is the hands-on act of injecting a specific failure to test resilience; chaos engineering is the broader discipline of systematic failure experiments." }
+    ],
+    "brief": "Chaos testing is the concrete act of introducing a fault — killing a container, dropping a database connection, spiking CPU — and confirming the system copes as expected. It's essentially chaos engineering applied as individual tests, often automated into CI/CD or run as scheduled 'game-day' exercises. The distinction people draw is scope: 'testing' is the individual experiment, 'engineering' is the ongoing discipline of designing, running and learning from many of them. Either way the goal is the same — find failure modes on your terms, not during a 3am outage."
+  },
+  {
+    "term": "Performance Testing",
+    "theme": "Ways of working",
+    "oneLiner": "Checking how fast and stable a system is under load.",
+    "why": "Software that's fine for one user can crawl or crash under thousands; performance testing measures speed, throughput and stability under realistic and peak load before users hit the limits.",
+    "analogy": "A stress test on a treadmill — see how the heart holds up as the pace climbs, well before race day.",
+    "connects": ["Chaos Testing", "SRE"],
+    "summary": "Testing a system's speed, throughput and stability under expected and extreme load (load, stress, soak and spike tests).",
+    "nextTopics": ["SRE", "Chaos Testing", "Thresholding"],
+    "cards": [
+      { "q": "What does performance testing measure?", "a": "How fast, scalable and stable a system is under load — response time, throughput, and behaviour at and beyond peak." },
+      { "q": "Load vs stress test?", "a": "Load tests check behaviour at expected traffic; stress tests push beyond limits to find the breaking point." }
+    ],
+    "brief": "Performance testing measures non-functional qualities — response time, throughput, resource use and stability — under controlled load, rather than whether features are correct. It comes in several flavours: load testing at expected traffic, stress testing beyond limits to find the breaking point, soak testing for slow leaks over time, and spike testing for sudden surges. The results feed capacity planning and reliability targets, and catching a bottleneck here is far cheaper than discovering it during a launch. It complements resilience practices like chaos testing, which probe failure rather than load."
   }
 ];

@@ -24,7 +24,7 @@
   const WORKER_URL = (window.PRIMER_CONFIG && window.PRIMER_CONFIG.WORKER_URL || "").replace(/\/+$/, "");
 
   // Version stamp — BUMP THIS on each release so a device shows which build it runs.
-  const APP_VERSION = "1.4.1";
+  const APP_VERSION = "1.5.0";
 
   // Per-theme accent colours (kept in sync with the --t-* vars in style.css).
   const THEME_COLORS = {
@@ -326,6 +326,7 @@
   }
 
   /* ------------------------------ LIBRARY --------------------------------- */
+  let libCollapsed = new Set();   // theme names currently collapsed on Home
   function renderLibrary() {
     const q = (document.getElementById("librarySearch").value || "").trim().toLowerCase();
     const list = document.getElementById("libraryList");
@@ -341,14 +342,25 @@
     filtered.forEach((c) => { (groups[c.theme] = groups[c.theme] || []).push(c); });
 
     const now = Date.now();
+    // when the user is searching, force sections open so matches are visible
+    const searching = q.length > 0;
     orderedThemes(groups).forEach((theme) => {
       const col = themeColor(theme);
-      const h = document.createElement("div"); h.className = "theme-head";
-      h.textContent = theme + " (" + groups[theme].length + ")";
+      const collapsed = !searching && libCollapsed.has(theme);
+      const h = document.createElement("button");
+      h.className = "theme-head theme-toggle" + (collapsed ? "" : " open");
       h.style.color = col;
+      h.innerHTML = "<span>" + escapeHtml(theme) + " (" + groups[theme].length + ")</span><span class='chev'>▸</span>";
       list.appendChild(h);
 
       const grid = document.createElement("div"); grid.className = "lib-grid";
+      if (collapsed) grid.hidden = true;
+      h.onclick = () => {
+        if (libCollapsed.has(theme)) libCollapsed.delete(theme); else libCollapsed.add(theme);
+        const nowCollapsed = libCollapsed.has(theme);
+        grid.hidden = nowCollapsed;
+        h.classList.toggle("open", !nowCollapsed);
+      };
       groups[theme].sort((a, b) => a.term.localeCompare(b.term)).forEach((c) => {
         const isDue = c.inReview && c.cards.some((cd) => cd.srs.due <= now);
         const card = document.createElement("div");
@@ -500,12 +512,22 @@
     const item = queue[0];
     if (!item) { renderReview(); return; }
     const c = item.concept, card = item.card;
+
+    // stacked deck: up to 3 ghost cards peeking behind the active one
+    const ghosts = Math.min(3, queue.length - 1);
+    let ghostHtml = "";
+    for (let i = ghosts; i >= 1; i--) {
+      ghostHtml += '<div class="flash-ghost" style="transform:translateY(' + (i * 9) + 'px) scale(' + (1 - i * 0.035) + ');opacity:' + (0.55 - i * 0.13) + '"></div>';
+    }
+
     area.innerHTML =
-      '<div class="section-cap">' + queue.length + " due</div>" +
-      '<div class="flashcard">' +
-      '<div class="flash-term">' + escapeHtml(c.term) + "</div>" +
-      '<div class="flash-q">' + escapeHtml(card.q) + "</div>" +
-      (revealed ? '<div class="flash-a">' + escapeHtml(card.a) + "</div>" : "") +
+      '<div class="section-cap">Card 1 of ' + queue.length + " due</div>" +
+      '<div class="flash-stack">' + ghostHtml +
+        '<div class="flashcard" id="activeCard">' +
+          '<div class="flash-term">' + escapeHtml(c.term) + "</div>" +
+          '<div class="flash-q">' + escapeHtml(card.q) + "</div>" +
+          (revealed ? '<div class="flash-a">' + escapeHtml(card.a) + "</div>" : "") +
+        "</div>" +
       "</div>" +
       (revealed
         ? '<div class="grade-row">' +
@@ -513,9 +535,12 @@
             '<button class="btn-ghost g-good" data-g="good">Good</button>' +
             '<button class="btn-ghost g-easy" data-g="easy">Easy</button>' +
           "</div>"
-        : '<button class="btn-primary show-btn" id="showAnsBtn">Show answer</button>');
+        : '<button class="btn-primary show-btn" id="showAnsBtn">Show answer</button>') +
+      '<button class="link-btn skip-btn" id="skipBtn">↦ Skip (or swipe the card)</button>';
 
     const ft = area.querySelector(".flash-term"); if (ft) ft.style.color = themeColor(c.theme);
+    attachSwipe(document.getElementById("activeCard"));
+    document.getElementById("skipBtn").onclick = skipCard;
 
     if (!revealed) {
       document.getElementById("showAnsBtn").onclick = () => { revealed = true; showCard(); };
@@ -524,6 +549,45 @@
         b.onclick = () => { grade(card, b.dataset.g); queue.shift(); revealed = false; showCard(); renderStreak(); };
       });
     }
+  }
+
+  // Skip: move the current card to the back of the queue.
+  function skipCard() {
+    if (queue.length <= 1) { toast("That's the only card left"); return; }
+    queue.push(queue.shift());
+    revealed = false;
+    showCard();
+  }
+
+  // Swipe the active card horizontally to skip it.
+  function attachSwipe(card) {
+    if (!card) return;
+    let x0 = null, dx = 0;
+    card.style.touchAction = "pan-y";
+    card.addEventListener("pointerdown", (e) => {
+      x0 = e.clientX; dx = 0; card.style.transition = "none";
+      if (card.setPointerCapture) { try { card.setPointerCapture(e.pointerId); } catch (err) {} }
+    });
+    card.addEventListener("pointermove", (e) => {
+      if (x0 === null) return;
+      dx = e.clientX - x0;
+      card.style.transform = "translateX(" + dx + "px) rotate(" + (dx / 30) + "deg)";
+    });
+    const end = () => {
+      if (x0 === null) return;
+      if (Math.abs(dx) > 80 && queue.length > 1) {
+        card.style.transition = "transform 0.2s ease, opacity 0.2s ease";
+        card.style.transform = "translateX(" + (dx > 0 ? 500 : -500) + "px) rotate(" + (dx > 0 ? 18 : -18) + "deg)";
+        card.style.opacity = "0";
+        setTimeout(skipCard, 180);
+      } else {
+        card.style.transition = "transform 0.15s ease";
+        card.style.transform = "";
+      }
+      x0 = null;
+    };
+    card.addEventListener("pointerup", end);
+    card.addEventListener("pointercancel", end);
   }
 
   /* ------------------------------ CONCEPT OVERLAY ------------------------- */

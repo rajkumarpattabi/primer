@@ -161,6 +161,12 @@ code { background: var(--surface-2); border: 1px solid var(--line); padding: 1px
 .due-dot { flex: none; width: 9px; height: 9px; border-radius: 50%; background: var(--gold); }
 
 .theme-head { font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; margin: 18px 0 8px; font-weight: 700; color: var(--muted); }
+.theme-toggle {
+  display: flex; align-items: center; justify-content: space-between; width: 100%;
+  background: none; border: none; cursor: pointer; -webkit-tap-highlight-color: transparent;
+}
+.theme-toggle .chev { font-size: 12px; opacity: 0.7; transition: transform 0.15s ease; }
+.theme-toggle.open .chev { transform: rotate(90deg); }
 
 /* ---- Empty states ---- */
 .empty-state { text-align: center; color: var(--muted); padding: 30px 10px; }
@@ -200,12 +206,21 @@ code { background: var(--surface-2); border: 1px solid var(--line); padding: 1px
 
 /* ---- Review tab ---- */
 .review-area { padding-top: 8px; }
+.flash-stack { position: relative; margin-bottom: 14px; }
+.flash-ghost {
+  position: absolute; left: 0; right: 0; top: 0; bottom: 0;
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
+  z-index: 0; box-shadow: 0 2px 8px rgba(30,30,40,0.05);
+}
+.flash-stack .flashcard { margin-bottom: 0; }
 .flashcard {
+  position: relative; z-index: 1; will-change: transform;
   background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
   padding: 24px 18px; min-height: 180px; display: flex; flex-direction: column;
   justify-content: center; text-align: center; margin-bottom: 14px;
-  box-shadow: 0 2px 8px rgba(30,30,40,0.05);
+  box-shadow: 0 2px 8px rgba(30,30,40,0.05); touch-action: pan-y;
 }
+.skip-btn { display: block; width: 100%; text-align: center; margin-top: 4px; color: var(--muted); }
 .flash-term { font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 12px; font-weight: 700; }
 .flash-q { font-size: 18px; line-height: 1.5; color: var(--ink); }
 .flash-a { font-size: 15px; line-height: 1.6; color: var(--muted); margin-top: 14px; border-top: 1px solid var(--line); padding-top: 14px; }

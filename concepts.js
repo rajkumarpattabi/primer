@@ -494,5 +494,197 @@ window.PRIMER_SEED = [
       { q: "What is red teaming?", a: "Deliberately attacking or stress-testing a system to uncover weaknesses before real adversaries do." },
       { q: "Why red team an AI model?", a: "To find harmful, biased or manipulable outputs (e.g. jailbreaks) before release, so guardrails can be added." }
     ]
+  },
+  {
+    term: "Model monitoring", theme: "AI models",
+    oneLiner: "Watching a live model's accuracy and inputs over time.",
+    why: "Models silently degrade in production as data shifts; monitoring tracks predictions, inputs and outcomes so the drop is caught early.",
+    analogy: "A hospital monitor that beeps when a patient's vitals slip out of range.",
+    connects: ["Model drift", "Data drift", "Concept drift", "MLOps", "Retraining pipelines"],
+    summary: "Continuously tracking a deployed model's performance and input data so degradation is detected and fixed.",
+    nextTopics: ["Retraining pipelines", "Data drift", "Confusion matrix"],
+    cards: [
+      { q: "Why monitor a model in production?", a: "Accuracy silently decays as data drifts; monitoring catches the drop early." },
+      { q: "What does model monitoring track?", a: "Predictions, input distributions, and real-world outcomes vs expectations." }
+    ]
+  },
+  {
+    term: "Retraining pipelines", theme: "AI models",
+    oneLiner: "Automated flow to refresh a model on new data.",
+    why: "When a model drifts you must retrain it on fresh data; a pipeline automates that repeatedly instead of by hand.",
+    analogy: "A dishwasher cycle for your model — feed in new data, get a refreshed model out, on schedule.",
+    connects: ["Model drift", "Model monitoring", "MLOps"],
+    summary: "An automated sequence that retrains, validates and redeploys a model on new data to counter drift.",
+    nextTopics: ["MLOps", "Model monitoring", "Data drift"],
+    cards: [
+      { q: "What is a retraining pipeline?", a: "An automated flow that retrains, validates and redeploys a model on fresh data." },
+      { q: "Why automate retraining?", a: "Models drift over time; automation keeps them current without manual rework." }
+    ]
+  },
+  {
+    term: "SHAP & LIME", theme: "AI models",
+    oneLiner: "Techniques that explain individual model predictions.",
+    why: "Black-box models don't say why; SHAP and LIME estimate how much each input feature pushed a specific prediction, making it interpretable.",
+    analogy: "An itemised receipt showing which items made up the total.",
+    connects: ["Explainability", "Model types", "Confusion matrix"],
+    summary: "SHAP and LIME attribute a model's prediction to its input features — the practical tools of explainability.",
+    nextTopics: ["Explainability", "Bias & fairness", "Feature importance"],
+    cards: [
+      { q: "What do SHAP and LIME do?", a: "Explain a model's prediction by estimating each input feature's contribution." },
+      { q: "Which concept do SHAP/LIME serve?", a: "Explainability — turning a black-box output into an interpretable one." }
+    ]
+  },
+  {
+    term: "Showback vs chargeback", theme: "Ways of working",
+    oneLiner: "Two ways to make teams see their cloud costs.",
+    why: "To control cloud spend you attribute it to teams; showback just reports each team's cost, chargeback actually bills it to them.",
+    analogy: "Showback = showing each flatmate their share of the bill; chargeback = actually making them pay it.",
+    connects: ["FinOps"],
+    summary: "Showback reports cost per team for awareness; chargeback financially charges them — two FinOps accountability models.",
+    nextTopics: ["FinOps", "Cloud cost optimisation", "Unit economics"],
+    cards: [
+      { q: "Showback vs chargeback?", a: "Showback shows each team its cost (awareness); chargeback actually bills the cost to them." }
+    ]
+  },
+  {
+    term: "ROC curve & AUC", theme: "AI models",
+    oneLiner: "A curve and score summarising a classifier at all thresholds.",
+    why: "A classifier's quality depends on the chosen threshold; the ROC curve plots the trade-offs across all thresholds and AUC boils it into one number.",
+    analogy: "A car's full performance graph across all speeds, plus a single overall rating.",
+    connects: ["Confusion matrix", "Precision vs recall", "Confidence score", "Thresholding"],
+    summary: "ROC plots true-positive vs false-positive rate across thresholds; AUC (area under it, 0.5–1) is a single threshold-independent score.",
+    nextTopics: ["Precision vs recall", "Thresholding", "F1 score"],
+    cards: [
+      { q: "What does AUC measure?", a: "Overall classifier quality across all thresholds — 1.0 perfect, 0.5 random." },
+      { q: "What does the ROC curve show?", a: "True-positive rate vs false-positive rate as the decision threshold varies." }
+    ]
+  },
+  {
+    term: "F1 score", theme: "AI models",
+    oneLiner: "One number balancing precision and recall.",
+    why: "Precision and recall trade off; F1 combines them into a single score so you can compare models when both matter.",
+    analogy: "A combined grade for a student strong in both accuracy and coverage, not just one.",
+    connects: ["Precision vs recall", "Confusion matrix", "ROC curve & AUC"],
+    summary: "F1 is the harmonic mean of precision and recall; high only when both are high — useful on imbalanced data.",
+    nextTopics: ["Precision vs recall", "ROC curve & AUC", "Class imbalance"],
+    cards: [
+      { q: "What is the F1 score?", a: "The harmonic mean of precision and recall — a single balanced metric." },
+      { q: "When is F1 useful?", a: "When classes are imbalanced and both false alarms and misses matter." }
+    ]
+  },
+  {
+    term: "Thresholding", theme: "AI models",
+    oneLiner: "Choosing the cutoff that turns a score into a decision.",
+    why: "Models output a probability; you must pick the cutoff above which it counts as a 'yes' — and that choice trades precision against recall.",
+    analogy: "Setting how sensitive a smoke alarm is — too low means nuisance alarms, too high means missed fires.",
+    connects: ["Confidence score", "Precision vs recall", "ROC curve & AUC", "Confusion matrix"],
+    summary: "Thresholding sets the probability cutoff for a positive decision; moving it shifts the precision/recall balance.",
+    nextTopics: ["Precision vs recall", "ROC curve & AUC", "Confidence score"],
+    cards: [
+      { q: "What is thresholding?", a: "Picking the score cutoff above which a prediction counts as positive." },
+      { q: "What does changing the threshold affect?", a: "The precision/recall balance — and thus the confusion matrix." }
+    ]
+  },
+  {
+    term: "Chunking", theme: "AI applications",
+    oneLiner: "Splitting documents into pieces for retrieval.",
+    why: "You can't embed a whole document as one vector; chunking cuts text into focused pieces so search can return the right passage.",
+    analogy: "Cutting a long book into labelled index cards you can pull individually.",
+    connects: ["RAG", "Retrieval", "Semantic search"],
+    summary: "Chunking breaks source text into right-sized, often overlapping pieces so retrieval is precise; chunk size is the key tuning knob.",
+    nextTopics: ["Retrieval", "Re-ranking", "Semantic search"],
+    cards: [
+      { q: "Why chunk documents in RAG?", a: "So retrieval returns focused passages; a whole document is too big to embed or search precisely." },
+      { q: "What's the main chunking trade-off?", a: "Too big = noisy/imprecise; too small = missing context. Overlap helps." }
+    ]
+  },
+  {
+    term: "Retrieval", theme: "AI applications",
+    oneLiner: "Fetching the most relevant pieces to answer a query.",
+    why: "RAG must find the right chunks before the model answers; retrieval ranks and returns the best-matching pieces.",
+    analogy: "A librarian pulling the few relevant books before you write your essay.",
+    connects: ["RAG", "Chunking", "Semantic search", "Re-ranking"],
+    summary: "Retrieval is the step that finds and ranks the most relevant chunks (dense, keyword, or hybrid) to feed the model.",
+    nextTopics: ["Re-ranking", "Hybrid search", "Chunking"],
+    cards: [
+      { q: "What does retrieval do in RAG?", a: "Finds and ranks the most relevant chunks for the query before the LLM answers." },
+      { q: "Dense vs sparse retrieval?", a: "Dense = by meaning (embeddings); sparse = by exact keywords; hybrid combines both." }
+    ]
+  },
+  {
+    term: "Re-ranking", theme: "AI applications",
+    oneLiner: "Reordering retrieved results by true relevance.",
+    why: "First-pass retrieval is fast but rough; a re-ranker re-scores the top results more carefully so the best ones rise to the top.",
+    analogy: "A quick sift grabs a shortlist; a picky judge then reorders the finalists.",
+    connects: ["Retrieval", "RAG", "Semantic search"],
+    summary: "Re-ranking is a second, more accurate scoring pass over retrieved candidates — often the biggest easy win for RAG precision.",
+    nextTopics: ["Retrieval", "Hybrid search", "Chunking"],
+    cards: [
+      { q: "What is re-ranking?", a: "A second, more precise scoring pass that reorders the top retrieved results." },
+      { q: "Why re-rank?", a: "Fast retrieval is rough; re-ranking sharpens which results are actually most relevant." }
+    ]
+  },
+  {
+    term: "State management", theme: "AI applications",
+    oneLiner: "Tracking data that persists across steps.",
+    why: "Multi-step programs and agents must remember what happened so far; state management is how that memory is stored and updated between steps.",
+    analogy: "A running scoreboard everyone updates as a game progresses.",
+    connects: ["LangGraph", "AI agents", "Agentic AI"],
+    summary: "State management keeps and updates the shared 'memory' a multi-step workflow or agent carries between steps.",
+    nextTopics: ["LangGraph", "Multi-agent systems", "Human-in-the-loop"],
+    cards: [
+      { q: "What is state in an agent workflow?", a: "The shared, evolving memory of progress carried between steps." }
+    ]
+  },
+  {
+    term: "Multi-agent systems", theme: "AI applications",
+    oneLiner: "Several AI agents cooperating on a task.",
+    why: "One agent struggles with big, varied jobs; splitting work across specialised agents that coordinate can be more capable and modular.",
+    analogy: "A project team of specialists — researcher, writer, reviewer — instead of one generalist.",
+    connects: ["AI agents", "Agentic AI", "Orchestration frameworks", "LangGraph"],
+    summary: "Multi-agent systems coordinate several specialised agents (often with roles and messaging) to solve a task together.",
+    nextTopics: ["Orchestration frameworks", "AI agents", "Human-in-the-loop"],
+    cards: [
+      { q: "What is a multi-agent system?", a: "Several AI agents, often specialised, coordinating to complete a task." },
+      { q: "Why use multiple agents?", a: "To divide complex work into specialised, modular roles that collaborate." }
+    ]
+  },
+  {
+    term: "Orchestration frameworks", theme: "AI applications",
+    oneLiner: "Tools that coordinate AI agents and steps.",
+    why: "Running agents, tools and multi-step flows reliably needs plumbing; orchestration frameworks manage the control flow, state and tool calls.",
+    analogy: "A conductor keeping every musician in time and on cue.",
+    connects: ["LangGraph", "LangChain", "Multi-agent systems", "AI agents"],
+    summary: "Orchestration frameworks (e.g. LangGraph, CrewAI, AutoGen) coordinate the steps, state and tools of agentic AI systems.",
+    nextTopics: ["LangGraph", "Multi-agent systems", "AI agents"],
+    cards: [
+      { q: "What do orchestration frameworks do?", a: "Coordinate the steps, state and tool calls of agents and multi-step AI systems." }
+    ]
+  },
+  {
+    term: "Human-in-the-loop", theme: "AI applications",
+    oneLiner: "A person reviews or approves AI actions.",
+    why: "For risky or uncertain steps, a human checkpoint keeps an autonomous system safe and correct before it acts.",
+    analogy: "A learner driver with an instructor who can grab the wheel.",
+    connects: ["Guardrails", "AI agents", "Agentic AI", "Red teaming"],
+    summary: "Human-in-the-loop inserts a person to review, correct or approve at key points, balancing automation with oversight.",
+    nextTopics: ["Guardrails", "Multi-agent systems", "Red teaming"],
+    cards: [
+      { q: "What is human-in-the-loop?", a: "Inserting a human to review or approve AI decisions at critical points." },
+      { q: "Why use it?", a: "To keep autonomous systems safe and correct on risky or uncertain steps." }
+    ]
+  },
+  {
+    term: "CAP theorem", theme: "Concepts",
+    oneLiner: "Pick two: consistency, availability, partition tolerance.",
+    why: "In a distributed system that can lose network links, you can't have perfect consistency and availability at once — CAP names that unavoidable trade-off.",
+    analogy: "Two shops that can't phone each other: either stop selling to stay in sync, or keep selling and risk disagreeing.",
+    connects: ["ACID", "Data lake"],
+    summary: "CAP theorem: during a network partition a distributed store must choose between consistency and availability — you can't have both.",
+    nextTopics: ["ACID", "BASE / eventual consistency", "Distributed systems"],
+    cards: [
+      { q: "What does CAP theorem state?", a: "During a network partition, a distributed system must trade off consistency vs availability." },
+      { q: "What do C, A and P stand for?", a: "Consistency, Availability, Partition tolerance." }
+    ]
   }
 ];

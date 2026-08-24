@@ -24,7 +24,7 @@
   const WORKER_URL = (window.PRIMER_CONFIG && window.PRIMER_CONFIG.WORKER_URL || "").replace(/\/+$/, "");
 
   // Version stamp — BUMP THIS on each release so a device shows which build it runs.
-  const APP_VERSION = "1.4.0";
+  const APP_VERSION = "1.4.1";
 
   // Per-theme accent colours (kept in sync with the --t-* vars in style.css).
   const THEME_COLORS = {

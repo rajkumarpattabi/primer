@@ -686,5 +686,18 @@ window.PRIMER_SEED = [
       { q: "What does CAP theorem state?", a: "During a network partition, a distributed system must trade off consistency vs availability." },
       { q: "What do C, A and P stand for?", a: "Consistency, Availability, Partition tolerance." }
     ]
+  },
+  {
+    term: "Multithreading", theme: "Concepts",
+    oneLiner: "Running several tasks at once within one program.",
+    why: "A single-threaded program does one thing at a time and stalls while waiting; multithreading runs several threads concurrently, using multi-core CPUs and staying responsive.",
+    analogy: "One cook working several burners at once instead of finishing one dish before starting the next.",
+    connects: ["ACID", "CAP theorem"],
+    summary: "Multithreading splits a program into concurrent threads so work overlaps — faster and more responsive, but shared data must be guarded from race conditions.",
+    nextTopics: ["Concurrency vs parallelism", "Race conditions", "Async / await"],
+    cards: [
+      { q: "What is multithreading?", a: "Running multiple threads (tasks) concurrently within one program, so work overlaps instead of running one at a time." },
+      { q: "What's the main risk of multithreading?", a: "Threads sharing data can collide (race conditions), so access must be synchronised (e.g. locks)." }
+    ]
   }
 ];

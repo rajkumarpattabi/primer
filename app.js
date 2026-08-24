@@ -24,7 +24,7 @@
   const WORKER_URL = (window.PRIMER_CONFIG && window.PRIMER_CONFIG.WORKER_URL || "").replace(/\/+$/, "");
 
   // Version stamp — BUMP THIS on each release so a device shows which build it runs.
-  const APP_VERSION = "1.6.1";
+  const APP_VERSION = "1.6.2";
 
   // Per-theme accent colours (kept in sync with the --t-* vars in style.css).
   const THEME_COLORS = {
@@ -113,6 +113,7 @@
       nextTopics: Array.isArray(raw.nextTopics) ? raw.nextTopics : [],
       cards: cards,
       inReview: inReview !== false,
+      read: raw.read || false,
       createdAt: raw.createdAt || now
     };
   }
@@ -362,14 +363,14 @@
         h.classList.toggle("open", !nowCollapsed);
       };
       groups[theme].sort((a, b) => a.term.localeCompare(b.term)).forEach((c) => {
-        const isDue = c.inReview && c.cards.some((cd) => cd.srs.due <= now);
+        const unread = !c.read;
         const card = document.createElement("div");
         card.className = "lib-card";
         card.style.borderLeftColor = themeColor(c.theme);
         card.innerHTML =
           '<div class="lt">' + escapeHtml(c.term) + "</div>" +
           '<div class="lo">' + escapeHtml(c.oneLiner || "") + "</div>" +
-          (isDue ? '<span class="due-dot" title="due for review"></span>' : "");
+          (unread ? '<span class="unread-dot" title="unread"></span>' : "");
         card.onclick = () => openConcept(c.id);
         grid.appendChild(card);
       });
@@ -736,6 +737,10 @@
   function openConcept(id) {
     const c = findConcept(id);
     if (!c) return;
+    if (!c.read) {
+      c.read = true; saveConcepts();
+      if (document.getElementById("tab-library").classList.contains("active")) renderLibrary();
+    }
     openId = id;
     const col = themeColor(c.theme);
     const themeEl = document.getElementById("overlayTheme");

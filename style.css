@@ -159,6 +159,7 @@ code { background: var(--surface-2); border: 1px solid var(--line); padding: 1px
 .concept-row .term { font-size: 15px; font-weight: 600; }
 .concept-row .ol { font-size: 12px; color: var(--muted); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .due-dot { flex: none; width: 9px; height: 9px; border-radius: 50%; background: var(--gold); }
+.lib-card .unread-dot { position: absolute; top: 8px; right: 8px; width: 8px; height: 8px; border-radius: 50%; background: var(--accent); }
 
 .theme-head { font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; margin: 18px 0 8px; font-weight: 700; color: var(--muted); }
 .theme-toggle {

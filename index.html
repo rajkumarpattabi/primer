@@ -43,35 +43,17 @@
 
 <main>
 
-  <!-- ================= CAPTURE ================= -->
-  <section id="tab-capture" class="tab">
-    <div class="capture-box">
-      <input id="termInput" class="term-input" type="text" autocomplete="off"
-             autocapitalize="none" placeholder="Type any term you heard…">
-      <button id="explainBtn" class="btn-primary">Retrieve / Search</button>
-      <div id="captureHint" class="capture-hint"></div>
-      <div id="captureSuggest" class="suggest-list"></div>
-    </div>
-
-    <div id="dueStrip" class="due-strip" hidden>
-      <span id="dueCount">0 due</span>
-      <button id="goReviewBtn" class="link-btn">Review now →</button>
-    </div>
-
-    <div class="section-cap">Recently captured</div>
-    <div id="recentList" class="chip-wrap"></div>
-
-    <div id="captureEmpty" class="empty-state">
-      <div class="empty-emoji">◈</div>
-      <p>No concepts yet. New concepts are added with Claude and pushed via git —
-         they'll appear here automatically on next open.</p>
-    </div>
-  </section>
-
-  <!-- ================= LIBRARY ================= -->
+  <!-- ================= HOME (search + add + library) ================= -->
   <section id="tab-library" class="tab active">
     <input id="librarySearch" class="term-input" type="text" autocomplete="off"
-           autocapitalize="none" placeholder="Search your library…">
+           autocapitalize="none" placeholder="Search a concept, or add a new one…">
+    <button id="explainBtn" class="btn-primary">Retrieve / Search</button>
+    <div id="captureHint" class="capture-hint"></div>
+    <button id="dueNudge" class="due-nudge" hidden></button>
+
+    <div class="section-cap" id="recentCap">Recently captured</div>
+    <div id="recentList" class="chip-wrap recent-2row"></div>
+
     <div id="libraryList"></div>
     <div id="libraryEmpty" class="empty-state">
       <div class="empty-emoji">▤</div>
@@ -168,7 +150,6 @@
 <!-- ================= BOTTOM TAB BAR ================= -->
 <nav class="tabbar">
   <button class="tabbtn active" data-tab="library"><span class="tab-ic">⌂</span>Home</button>
-  <button class="tabbtn" data-tab="capture"><span class="tab-ic">⌕</span>Search</button>
   <button class="tabbtn" data-tab="map"><span class="tab-ic">◈</span>Map</button>
   <button class="tabbtn" data-tab="review"><span class="tab-ic">↻</span>Review</button>
   <button class="tabbtn" data-tab="more"><span class="tab-ic">⚙</span>More</button>

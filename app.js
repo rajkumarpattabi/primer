@@ -24,7 +24,7 @@
   const WORKER_URL = (window.PRIMER_CONFIG && window.PRIMER_CONFIG.WORKER_URL || "").replace(/\/+$/, "");
 
   // Version stamp — BUMP THIS on each release so a device shows which build it runs.
-  const APP_VERSION = "1.7.1";
+  const APP_VERSION = "1.8.0";
 
   // Per-theme accent colours (kept in sync with the --t-* vars in style.css).
   const THEME_COLORS = {
@@ -187,14 +187,13 @@
     if (name === "library") renderLibrary();
     if (name === "map") renderMap();
     if (name === "review") renderReview();
-    if (name === "capture") renderCapture();
     if (name === "more") renderMore();
     document.querySelector("main").scrollTop = 0;
   }
 
-  /* ------------------------------ CAPTURE --------------------------------- */
+  /* ------------------------------ SEARCH / ADD ---------------------------- */
   async function doExplain() {
-    const input = document.getElementById("termInput");
+    const input = document.getElementById("librarySearch");
     const term = input.value.trim();
     if (!term) return;
     const hint = document.getElementById("captureHint");
@@ -231,18 +230,18 @@
   // Default handler when live AI Capture is on the backlog (no WORKER_URL):
   // the box is a quick "jump to a concept". New content arrives via git (Path A).
   function doFind() {
-    const input = document.getElementById("termInput");
+    const input = document.getElementById("librarySearch");
     const term = input.value.trim();
     if (!term) return;
     const hit = findByTerm(term) || concepts.find((c) => c.term.toLowerCase().includes(term.toLowerCase()));
-    if (hit) { input.value = ""; openConcept(hit.id); return; }
-    toast('Not in your library yet — ask Claude to add "' + term + '" and push.');
+    if (hit) { input.value = ""; renderLibrary(); openConcept(hit.id); return; }
+    toast('Not in your library yet — set a GitHub token in More to add it, or ask Claude to add "' + term + '".');
   }
 
   // Commit a term straight to the repo's inbox/ folder via the GitHub API, so the
   // laptop can later turn it into a full concept. Token is stored only on-device.
   async function queueToGit() {
-    const input = document.getElementById("termInput");
+    const input = document.getElementById("librarySearch");
     const term = input.value.trim();
     if (!term) return;
     const hint = document.getElementById("captureHint");
@@ -265,7 +264,7 @@
       if (res.status === 401 || res.status === 403) { hint.textContent = "GitHub token rejected or lacks access. Check it in More →."; btn.disabled = false; return; }
       if (!res.ok) throw new Error("HTTP " + res.status);
       input.value = ""; hint.textContent = "";
-      document.getElementById("captureSuggest").innerHTML = ""; refreshCaptureUI();
+      renderLibrary();
       toast("Queued “" + term + "” to git — becomes a full concept after the next laptop sync.");
     } catch (e) {
       hint.textContent = "Couldn't reach GitHub (" + (e.message || e) + "). Check your connection or token.";
@@ -277,72 +276,52 @@
   // The Capture box is a combined search-or-add: submitting an existing term
   // opens it; a new term is queued to git (or AI/find if no token).
   function submitCapture() {
-    const input = document.getElementById("termInput");
+    const input = document.getElementById("librarySearch");
     const q = input.value.trim();
     if (!q) return;
     const exact = findByTerm(q);
-    if (exact) { input.value = ""; document.getElementById("captureSuggest").innerHTML = ""; refreshCaptureUI(); openConcept(exact.id); return; }
+    if (exact) { input.value = ""; renderLibrary(); openConcept(exact.id); return; }
     if (settings.ghToken) return queueToGit();
     if (WORKER_URL) return doExplain();
     return doFind();
   }
 
-  function setCapturePlaceholder() {
-    const i = document.getElementById("termInput");
-    i.placeholder = settings.ghToken ? "Search a term, or add a new one…"
-      : (WORKER_URL ? "Type any term you heard…" : "Search a concept…");
-  }
-
-  // Live search-as-you-type: show matching concepts and adapt the button
-  // (Open an existing term, or Add a new one to git).
-  function refreshCaptureUI() {
-    const input = document.getElementById("termInput");
-    const sug = document.getElementById("captureSuggest");
+  // Set the Home button label for the current search text (Open an exact match, else add).
+  function updateSearchButton() {
     const b = document.getElementById("explainBtn");
-    const q = (input.value || "").trim();
-    sug.innerHTML = "";
-    if (q) {
-      const ql = q.toLowerCase();
-      concepts
-        .filter((c) => c.term.toLowerCase().includes(ql) || (c.oneLiner || "").toLowerCase().includes(ql))
-        .sort((a, b2) => a.term.localeCompare(b2.term))
-        .slice(0, 6)
-        .forEach((c) => {
-          const it = document.createElement("div");
-          it.className = "suggest-item";
-          it.style.borderLeftColor = themeColor(c.theme);
-          it.innerHTML = '<span class="st">' + escapeHtml(c.term) + '</span><span class="so">' + escapeHtml(c.theme) + "</span>";
-          it.onclick = () => { input.value = ""; sug.innerHTML = ""; refreshCaptureUI(); openConcept(c.id); };
-          sug.appendChild(it);
-        });
-    }
+    if (!b) return;
+    const q = (document.getElementById("librarySearch").value || "").trim();
     const exact = q ? findByTerm(q) : null;
     if (exact) b.textContent = "Open";
-    else if (settings.ghToken) b.textContent = "Retrieve / Search";
-    else if (WORKER_URL) b.textContent = "Explain & save";
+    else if (WORKER_URL && !settings.ghToken) b.textContent = "Explain & save";
     else b.textContent = "Retrieve / Search";
   }
 
-  function renderCapture() {
-    renderStreak();
-    const due = dueCards().length;
-    const strip = document.getElementById("dueStrip");
-    strip.hidden = due === 0;
-    document.getElementById("dueCount").textContent = due + (due === 1 ? " card due" : " cards due");
-
-    const recent = concepts.slice().sort((a, b) => b.createdAt - a.createdAt).slice(0, 12);
+  // Recently-captured chips (kept to ~2 rows by CSS) + the subtle "due → Review" nudge.
+  function renderHomeExtras() {
     const wrap = document.getElementById("recentList");
-    wrap.innerHTML = "";
-    recent.forEach((c, idx) => {
-      const chip = document.createElement("span");
-      chip.className = "chip" + (idx === 0 ? " teal" : "");
-      chip.textContent = c.term;
-      chip.onclick = () => openConcept(c.id);
-      wrap.appendChild(chip);
-    });
-    document.getElementById("captureEmpty").hidden = concepts.length > 0;
-    document.querySelector("#tab-capture .section-cap").hidden = concepts.length === 0;
-    refreshCaptureUI();
+    if (wrap) {
+      const recent = concepts.slice().sort((a, b) => b.createdAt - a.createdAt).slice(0, 10);
+      wrap.innerHTML = "";
+      recent.forEach((c, idx) => {
+        const chip = document.createElement("span");
+        chip.className = "chip" + (idx === 0 ? " teal" : "");
+        chip.textContent = c.term;
+        chip.onclick = () => openConcept(c.id);
+        wrap.appendChild(chip);
+      });
+      const cap = document.getElementById("recentCap");
+      if (cap) cap.hidden = concepts.length === 0;
+    }
+    const nudge = document.getElementById("dueNudge");
+    if (nudge) {
+      const due = dueCards().length;
+      nudge.hidden = due === 0;
+      if (due > 0) {
+        nudge.textContent = due + (due === 1 ? " card due · Review →" : " cards due · Review →");
+        nudge.onclick = () => setTab("review");
+      }
+    }
   }
 
   /* ------------------------------ LIBRARY --------------------------------- */
@@ -395,6 +374,10 @@
       });
       list.appendChild(grid);
     });
+
+    renderHomeExtras();
+    updateSearchButton();
+    renderStreak();
   }
 
   /* ------------------------------ MAP ------------------------------------- */
@@ -796,11 +779,11 @@
       el.onclick = () => {
         const linked = findByTerm(el.dataset.term);
         if (linked) openConcept(linked.id);
-        else { closeOverlay(); setTab("capture"); document.getElementById("termInput").value = el.dataset.term; toast('Tap "Explain" to add ' + el.dataset.term); }
+        else { closeOverlay(); setTab("library"); document.getElementById("librarySearch").value = el.dataset.term; renderLibrary(); toast('Tap "Retrieve / Search" to add ' + el.dataset.term); }
       };
     });
     body.querySelectorAll("[data-next]").forEach((el) => {
-      el.onclick = () => { closeOverlay(); setTab("capture"); document.getElementById("termInput").value = el.dataset.next; toast('Tap "Explain" to learn ' + el.dataset.next); };
+      el.onclick = () => { closeOverlay(); setTab("library"); document.getElementById("librarySearch").value = el.dataset.next; renderLibrary(); toast('Tap "Retrieve / Search" to add ' + el.dataset.next); };
     });
 
     const addBtn = document.getElementById("addReviewBtn");
@@ -825,7 +808,7 @@
     const c = findConcept(openId); if (!c) return;
     if (!confirm('Delete "' + c.term + '"? This only affects this device.')) return;
     concepts = concepts.filter((x) => x.id !== openId);
-    saveConcepts(); closeOverlay(); renderCapture(); toast("Deleted");
+    saveConcepts(); closeOverlay(); renderLibrary(); toast("Deleted");
   }
 
   /* ------------------------------ SETTINGS -------------------------------- */
@@ -855,7 +838,7 @@
         const data = JSON.parse(r.result);
         if (Array.isArray(data.concepts)) { concepts = data.concepts.map((c) => normaliseConcept(c, c.inReview !== false)); saveConcepts(); }
         if (data.settings) { settings = Object.assign(settings, data.settings); saveSettings(); }
-        toast("Backup imported"); setTab("capture"); renderStreak();
+        toast("Backup imported"); setTab("library"); renderStreak();
       } catch (e) { toast("Couldn't read that file"); }
     };
     r.readAsText(file);
@@ -892,16 +875,11 @@
         h.classList.toggle("open", opening);
       };
     });
-    // Adapt the Capture box to whether live AI Capture is enabled (backlog by default).
-    const explainBtn = document.getElementById("explainBtn");
-    const termInput = document.getElementById("termInput");
-    setCapturePlaceholder();
-    refreshCaptureUI();
-    explainBtn.onclick = submitCapture;
-    termInput.addEventListener("input", refreshCaptureUI);
-    termInput.addEventListener("keydown", (e) => { if (e.key === "Enter") submitCapture(); });
-    document.getElementById("librarySearch").addEventListener("input", renderLibrary);
-    document.getElementById("goReviewBtn").onclick = () => setTab("review");
+    // Home search-or-add box: one input filters the grid live AND adds new terms.
+    const searchInput = document.getElementById("librarySearch");
+    document.getElementById("explainBtn").onclick = submitCapture;
+    searchInput.addEventListener("input", renderLibrary);
+    searchInput.addEventListener("keydown", (e) => { if (e.key === "Enter") submitCapture(); });
     document.getElementById("overlayBack").onclick = closeOverlay;
     document.getElementById("addReviewBtn").onclick = toggleReview;
     document.getElementById("deleteConceptBtn").onclick = deleteOpen;
@@ -911,7 +889,7 @@
     };
     document.getElementById("saveGhBtn").onclick = () => {
       settings.ghToken = document.getElementById("ghTokenInput").value.trim(); saveSettings();
-      setCapturePlaceholder(); refreshCaptureUI(); renderMore(); toast("Token saved");
+      renderLibrary(); renderMore(); toast("Token saved");
     };
     document.getElementById("exportBtn").onclick = exportBackup;
     document.getElementById("importFile").onchange = (e) => { if (e.target.files[0]) importBackup(e.target.files[0]); };

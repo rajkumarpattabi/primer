@@ -1584,5 +1584,80 @@ window.PRIMER_SEED = [
       { "q": "Load vs stress test?", "a": "Load tests check behaviour at expected traffic; stress tests push beyond limits to find the breaking point." }
     ],
     "brief": "Performance testing measures non-functional qualities — response time, throughput, resource use and stability — under controlled load, rather than whether features are correct. It comes in several flavours: load testing at expected traffic, stress testing beyond limits to find the breaking point, soak testing for slow leaks over time, and spike testing for sudden surges. The results feed capacity planning and reliability targets, and catching a bottleneck here is far cheaper than discovering it during a launch. It complements resilience practices like chaos testing, which probe failure rather than load."
+  },
+  {
+    "term": "SLO / SLA / SLI",
+    "theme": "Ways of working",
+    "oneLiner": "The metrics that define and promise reliability.",
+    "why": "To manage reliability you must measure it, target it, and sometimes contractually promise it — SLI, SLO and SLA are the three layers SRE uses to do exactly that.",
+    "analogy": "A delivery service: the SLI is your actual on-time rate, the SLO your internal goal (95%), the SLA the refund-backed promise to customers (90%).",
+    "connects": ["SRE", "MetricStream"],
+    "summary": "SLI = the measured indicator; SLO = the internal target for it; SLA = the external, often contractual, promise (with penalties).",
+    "nextTopics": ["SRE", "Error budgets", "Observability"],
+    "cards": [
+      { "q": "SLI vs SLO vs SLA?", "a": "SLI is the measured indicator (e.g. % successful requests); SLO is your internal target for it; SLA is the external contractual promise, usually with penalties." },
+      { "q": "Which is set strictest?", "a": "The SLO is usually tighter than the SLA, so you catch problems before breaching the customer-facing promise." }
+    ],
+    "brief": "These three terms form a hierarchy for managing reliability. An SLI (Service Level Indicator) is a concrete measurement — request success rate, latency, uptime. An SLO (Service Level Objective) is the internal target for that indicator, like '99.9% of requests succeed', and it's what error budgets are calculated from. An SLA (Service Level Agreement) is the external, contractual version shown to customers, usually looser than the SLO and carrying penalties like refunds if breached. Teams deliberately set the SLO stricter than the SLA so they get an early warning before the promise to customers is actually at risk."
+  },
+  {
+    "term": "CORS",
+    "theme": "Concepts",
+    "oneLiner": "Browser rule for cross-site requests.",
+    "why": "Browsers block a page from reading a different domain's API by default for security; CORS is the mechanism by which a server explicitly opts in to allow specific other origins.",
+    "analogy": "A guest list at a private venue — the venue (server) must name which outside guests (origins) are allowed in, or the bouncer (browser) turns them away.",
+    "connects": ["Red teaming", "Guardrails"],
+    "summary": "Cross-Origin Resource Sharing: HTTP headers by which a server tells the browser which other origins may call it, relaxing the default same-origin block.",
+    "nextTopics": ["Same-origin policy", "Preflight request", "CSRF"],
+    "cards": [
+      { "q": "What problem does CORS address?", "a": "Browsers block cross-origin requests by default; CORS lets a server declare which other origins are allowed to call it." },
+      { "q": "Where is CORS enforced?", "a": "In the browser — it reads the server's Access-Control-Allow-Origin headers and blocks the response if the origin isn't permitted." }
+    ],
+    "brief": "By default browsers enforce the same-origin policy: JavaScript on one site can't read responses from a different domain, protecting users from malicious cross-site calls. CORS is the controlled exception — a set of HTTP response headers (chiefly Access-Control-Allow-Origin) with which a server declares which other origins may access it and how. For anything beyond simple requests the browser first sends a 'preflight' OPTIONS request to check permission. Crucially CORS is enforced by the browser, not the server, and it protects the user rather than the API — which is why a 'CORS error' means the browser blocked the response, not that the server rejected the call."
+  },
+  {
+    "term": "ToS",
+    "theme": "Concepts",
+    "oneLiner": "The rules you agree to when using a service.",
+    "why": "Every app or site needs a contract setting out acceptable use, liabilities and rights; the Terms of Service is that binding agreement between provider and user.",
+    "analogy": "The rulebook you sign before joining a club — use the facilities, but here's what you can't do and who's liable if things go wrong.",
+    "connects": ["Software licenses", "MetricStream"],
+    "summary": "Terms of Service: the legal agreement a user accepts to use a product, covering acceptable use, liability, termination and data rights.",
+    "nextTopics": ["Privacy policy", "Software licenses", "GDPR"],
+    "cards": [
+      { "q": "What is a Terms of Service?", "a": "The binding legal agreement between a service provider and its users, setting acceptable use, rights, liabilities and termination." },
+      { "q": "ToS vs a software licence?", "a": "A licence governs rights to use/modify code; a ToS governs use of a running service and the provider–user relationship." }
+    ],
+    "brief": "A Terms of Service (ToS) is the contract a user accepts — often just by clicking 'I agree' — to use a website or app. It typically covers acceptable use, content and IP ownership, disclaimers and limits of liability, how accounts can be suspended or terminated, dispute resolution, and how the terms may change. It usually sits alongside a separate privacy policy that specifically governs personal data. Though often skimmed past, it's legally binding, and for businesses it's a key risk-management document — which is why legal and compliance teams treat it seriously."
+  },
+  {
+    "term": "Microsoft Fabric",
+    "theme": "Data platforms",
+    "oneLiner": "Microsoft's unified SaaS data & analytics platform.",
+    "why": "Instead of stitching together separate tools for storage, engineering, warehousing and BI, Fabric bundles them into one managed service on a single lake, so teams work end to end in one place.",
+    "analogy": "An all-in-one kitchen appliance replacing a cupboard full of separate gadgets — one device, one power cord, everything connected.",
+    "connects": ["Lakehouse", "Power BI", "Databricks", "Snowflake"],
+    "summary": "A single SaaS platform unifying data engineering, warehousing, real-time analytics and BI on one lake (OneLake), tightly integrated with Power BI.",
+    "nextTopics": ["Power BI", "Lakehouse", "OneLake"],
+    "cards": [
+      { "q": "What is Microsoft Fabric?", "a": "Microsoft's unified SaaS analytics platform bundling data engineering, warehousing, real-time analytics and BI on a single lake (OneLake)." },
+      { "q": "How does Fabric relate to Power BI?", "a": "Power BI is Fabric's built-in visualization layer; Fabric adds the storage, engineering and warehousing beneath it." }
+    ],
+    "brief": "Microsoft Fabric is an all-in-one SaaS analytics platform that folds together capabilities that used to be separate products — data integration, engineering (Spark), a lakehouse and warehouse, real-time analytics and Power BI — over a single storage layer called OneLake. The pitch is simplicity: one governed copy of the data in open Delta format, one bill, and tight integration so an analyst, engineer and data scientist all work in the same environment. It competes with lakehouse platforms like Databricks and Snowflake, differentiating on deep Microsoft-365 and Power BI integration and a fully managed, low-setup experience."
+  },
+  {
+    "term": "Power BI",
+    "theme": "Data platforms",
+    "oneLiner": "Microsoft's tool for dashboards and data visualisation.",
+    "why": "Raw tables don't inform decisions; Power BI connects to data sources and turns them into interactive reports and dashboards business users can explore for themselves.",
+    "analogy": "A car dashboard — raw engine data turned into dials and warning lights you can read at a glance.",
+    "connects": ["Microsoft Fabric", "Snowflake", "Databricks"],
+    "summary": "A business-intelligence tool that connects to data sources and builds interactive reports and dashboards, part of the Microsoft ecosystem.",
+    "nextTopics": ["Microsoft Fabric", "Data warehouse", "DAX"],
+    "cards": [
+      { "q": "What is Power BI?", "a": "A Microsoft business-intelligence tool that connects to data and builds interactive dashboards and reports for exploration and sharing." },
+      { "q": "Who is Power BI aimed at?", "a": "Business and analytics users who need self-service reporting — drag-and-drop visuals over connected data, not just engineers." }
+    ],
+    "brief": "Power BI is Microsoft's business-intelligence and data-visualisation tool. It connects to hundreds of sources — databases, warehouses, spreadsheets, cloud services — lets you model and clean the data, then build interactive dashboards and reports with drag-and-drop visuals and a formula language (DAX) for custom metrics. Reports publish to the Power BI service for sharing, scheduled refresh and governance. Its strengths are approachability for non-engineers and deep integration with the Microsoft stack, and it's the built-in visualization layer of Microsoft Fabric."
   }
 ];

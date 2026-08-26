@@ -1659,5 +1659,35 @@ window.PRIMER_SEED = [
       { "q": "Who is Power BI aimed at?", "a": "Business and analytics users who need self-service reporting — drag-and-drop visuals over connected data, not just engineers." }
     ],
     "brief": "Power BI is Microsoft's business-intelligence and data-visualisation tool. It connects to hundreds of sources — databases, warehouses, spreadsheets, cloud services — lets you model and clean the data, then build interactive dashboards and reports with drag-and-drop visuals and a formula language (DAX) for custom metrics. Reports publish to the Power BI service for sharing, scheduled refresh and governance. Its strengths are approachability for non-engineers and deep integration with the Microsoft stack, and it's the built-in visualization layer of Microsoft Fabric."
+  },
+  {
+    "term": "Reasoning Model",
+    "theme": "AI models",
+    "oneLiner": "A model that thinks step-by-step before answering.",
+    "why": "Standard models answer in one pass and stumble on multi-step logic; reasoning models spend extra compute working through a problem internally, sharply improving maths, coding and complex tasks.",
+    "analogy": "Working a problem out on scratch paper before writing the final answer, instead of blurting the first thing that comes to mind.",
+    "connects": ["Model types", "Model names", "Hallucinations", "Confidence score"],
+    "summary": "A model that generates hidden step-by-step reasoning (chain-of-thought) before its final answer, trading speed and cost for accuracy on hard problems.",
+    "nextTopics": ["Chain-of-thought", "Model Routing", "Inference cost"],
+    "cards": [
+      { "q": "What is a reasoning model?", "a": "A model that works through a problem step-by-step (chain-of-thought) before answering, improving accuracy on complex tasks." },
+      { "q": "What's the trade-off?", "a": "It's slower and more expensive per answer, so it's used for hard problems rather than simple lookups." }
+    ],
+    "brief": "A reasoning model is trained and prompted to produce an internal chain of intermediate steps before committing to an answer, rather than responding in a single pass. That 'thinking' costs extra time and tokens but sharply improves performance on maths, logic, coding and multi-step planning — problems where a fast, off-the-cuff answer tends to fail. Because deliberation is expensive, systems often use a reasoning model only for hard queries and a cheaper fast model for the rest, sometimes with an adjustable 'reasoning effort'. Crucially it's a behaviour of the model, not a separate output type, so one model can offer both fast and reasoning modes."
+  },
+  {
+    "term": "Model Routing",
+    "theme": "AI applications",
+    "oneLiner": "Sending each query to the best-fit model.",
+    "why": "No single model is best for every task or budget; model routing automatically picks which model handles each request — a cheap fast one for easy queries, a powerful one for hard ones.",
+    "analogy": "A hospital triage nurse directing each patient to the right specialist instead of sending everyone to the surgeon.",
+    "connects": ["Model names", "Reasoning Model", "Orchestration frameworks", "Guardrails"],
+    "summary": "A layer that classifies each incoming request and dispatches it to the most suitable (or cheapest capable) model, balancing quality against cost and speed.",
+    "nextTopics": ["Reasoning Model", "Inference cost", "Orchestration frameworks"],
+    "cards": [
+      { "q": "What is model routing?", "a": "Automatically directing each request to the most suitable model — e.g. a cheap fast model for easy queries, a stronger one for hard tasks." },
+      { "q": "Why route between models?", "a": "To balance answer quality against cost and latency, since no single model is optimal for every task." }
+    ],
+    "brief": "Model routing puts a decision layer in front of several models and, for each incoming request, chooses which one should handle it. The router classifies the query — by difficulty, topic, required tools or cost ceiling — and dispatches simple requests to a small, cheap, fast model while reserving a powerful (often reasoning) model for the hard ones. Done well it cuts cost and latency dramatically without noticeably hurting quality, and it can add fallbacks when a model is unavailable. It's a common pattern in production LLM apps and multi-model gateways, and pairs naturally with orchestration frameworks that already manage tool and step routing."
   }
 ];

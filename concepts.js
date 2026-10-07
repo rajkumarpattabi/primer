@@ -1689,5 +1689,35 @@ window.PRIMER_SEED = [
       { "q": "Why route between models?", "a": "To balance answer quality against cost and latency, since no single model is optimal for every task." }
     ],
     "brief": "Model routing puts a decision layer in front of several models and, for each incoming request, chooses which one should handle it. The router classifies the query — by difficulty, topic, required tools or cost ceiling — and dispatches simple requests to a small, cheap, fast model while reserving a powerful (often reasoning) model for the hard ones. Done well it cuts cost and latency dramatically without noticeably hurting quality, and it can add fallbacks when a model is unavailable. It's a common pattern in production LLM apps and multi-model gateways, and pairs naturally with orchestration frameworks that already manage tool and step routing."
+  },
+  {
+    "term": "Rubrics",
+    "theme": "AI models",
+    "oneLiner": "Explicit criteria for scoring open-ended outputs.",
+    "why": "Open-ended answers (essays, LLM responses) can't be graded by exact match; a rubric lists the specific qualities to score, making evaluation consistent and less subjective.",
+    "analogy": "An exam marking scheme — points for structure, accuracy and clarity — so different markers grade the same essay the same way.",
+    "connects": ["Hallucinations", "Guardrails", "A/B testing", "Confusion matrix"],
+    "summary": "A defined set of criteria (and levels) used to score qualitative outputs consistently; central to evaluating LLMs, often applied by a human or an 'LLM-as-judge'.",
+    "nextTopics": ["LLM-as-judge", "Evaluation (evals)", "Guardrails"],
+    "cards": [
+      { "q": "What is a rubric in evaluation?", "a": "An explicit set of criteria (and scoring levels) for judging open-ended outputs consistently, instead of exact-match scoring." },
+      { "q": "Why use rubrics for LLM outputs?", "a": "LLM answers are open-ended; rubrics make grading them consistent and comparable, whether a human or another model does the scoring." }
+    ],
+    "brief": "A rubric breaks a fuzzy judgement like 'is this a good answer?' into specific, scorable dimensions — accuracy, completeness, tone, safety — often with defined levels for each. In AI evaluation they're essential because generative outputs have no single correct string to match against, so you score them against criteria instead. Rubrics are applied either by human reviewers or, increasingly, by an 'LLM-as-judge' that grades outputs automatically at scale. Well-designed rubrics make evaluations repeatable and comparable across model versions, which is what turns 'it feels better' into measurable progress."
+  },
+  {
+    "term": "Type safety",
+    "theme": "Concepts",
+    "oneLiner": "Catching type mismatches before code runs.",
+    "why": "Using a value as the wrong type (a string where a number is expected) causes bugs; type safety enforces that operations only happen on compatible types, catching whole classes of errors early.",
+    "analogy": "Power sockets shaped so you can't plug a device into the wrong voltage — the mismatch is physically prevented.",
+    "connects": ["Multithreading", "DevSecOps"],
+    "summary": "The degree to which a language or system prevents type errors — ideally at compile time — so you can't accidentally misuse a value's type.",
+    "nextTopics": ["Static vs dynamic typing", "TypeScript", "Compile-time vs runtime"],
+    "cards": [
+      { "q": "What is type safety?", "a": "A guarantee that operations only run on compatible data types, preventing type-mismatch errors — ideally caught at compile time." },
+      { "q": "Why does it matter?", "a": "It eliminates a whole class of bugs before the program runs, making code more reliable and safer to refactor." }
+    ],
+    "brief": "Type safety is the property that a program can't perform an operation on a value of the wrong type — adding a number to a function, say — without being stopped. Strongly, statically typed languages (and tools like TypeScript layered over JavaScript) enforce this at compile time, surfacing mistakes as you write rather than as crashes in production; dynamically typed languages check more at runtime. Beyond catching bugs, good types act as live documentation and make large refactors far safer, because the compiler flags everything a change breaks. The trade-off is some upfront verbosity in exchange for reliability that scales with codebase size."
   }
 ];
